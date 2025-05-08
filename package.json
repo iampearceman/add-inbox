@@ -4,42 +4,42 @@
     "description": "CLI tool to add Novu's Inbox component to your project with a single command",
     "main": "index.js",
     "bin": {
-      "add-inbox": "./index.js"
+        "add-inbox": "index.js"
     },
     "preferGlobal": true,
     "engines": {
-      "node": ">=14.0.0"
+        "node": ">=14.0.0"
     },
     "files": [
-      "index.js",
-      "README.md",
-      "LICENSE"
+        "index.js",
+        "README.md",
+        "LICENSE"
     ],
     "scripts": {
-      "test": "echo \"Error: no test specified\" && exit 1"
+        "test": "echo \"Error: no test specified\" && exit 1"
     },
     "keywords": [
-      "novu",
-      "inbox",
-      "notifications",
-      "cli",
-      "component",
-      "react",
-      "nextjs",
-      "tailwind"
+        "novu",
+        "inbox",
+        "notifications",
+        "cli",
+        "component",
+        "react",
+        "nextjs",
+        "tailwind"
     ],
     "author": "Emil Pearce",
     "license": "MIT",
     "dependencies": {
-      "chalk": "^4.1.2",
-      "prompts": "^2.4.2"
+        "chalk": "^4.1.2",
+        "prompts": "^2.4.2"
     },
     "repository": {
-      "type": "git",
-      "url": "https://github.com/iampearceman/add-inbox.git"
+        "type": "git",
+        "url": "git+https://github.com/iampearceman/add-inbox.git"
     },
     "bugs": {
-      "url": "https://github.com/iampearceman/add-inbox/issues"
+        "url": "https://github.com/iampearceman/add-inbox/issues"
     },
     "homepage": "https://github.com/iampearceman/add-inbox#readme"
-  }
+}
