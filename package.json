@@ -1,10 +1,10 @@
 {
-    "name": "novu-inbox-cli",
+    "name": "add-inbox",
     "version": "0.1.0",
     "description": "CLI tool to add Novu's Inbox component to your project with a single command",
     "main": "index.js",
     "bin": {
-      "inbox": "./index.js"
+      "add-inbox": "./index.js"
     },
     "preferGlobal": true,
     "engines": {
@@ -36,10 +36,10 @@
     },
     "repository": {
       "type": "git",
-      "url": "https://github.com/iampearceman/novu-inbox-cli.git"
+      "url": "https://github.com/iampearceman/add-inbox.git"
     },
     "bugs": {
-      "url": "https://github.com/iampearceman/novu-inbox-cli/issues"
+      "url": "https://github.com/iampearceman/add-inbox/issues"
     },
-    "homepage": "https://github.com/iampearceman/novu-inbox-cli#readme"
+    "homepage": "https://github.com/iampearceman/add-inbox#readme"
   }
