@@ -1,6 +1,6 @@
 # Add Inbox
 
-A CLI tool to easily add Novu's notification inbox component to your React or Next.js project.
+A CLI command to easily add Novu's notification inbox component to your React or Next.js project.
 
 ## Installation & Usage
 
