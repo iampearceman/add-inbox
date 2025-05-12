@@ -169,10 +169,27 @@ function createComponentStructure(framework, overwrite) {
   console.log(chalk.gray(`  • Created component directory structure at ${chalk.cyan(inboxDir)}`));
 
   console.log(chalk.gray('\n• Creating component files...'));
-  const inboxComponentFilePath = path.join(inboxDir, 'novuInbox.tsx');
+  const inboxComponentFilePath = path.join(inboxDir, 'NovuInbox.tsx');
   const inboxComponentContent = generateInboxComponentContent(framework);
   fs.writeFileSync(inboxComponentFilePath, inboxComponentContent);
-  console.log(chalk.green(`  ✓ Created ${chalk.cyan(path.join(inboxRelativeDir, 'novuInbox.tsx'))}`));
+  console.log(chalk.green(`  ✓ Created ${chalk.cyan(path.join(inboxRelativeDir, 'NovuInbox.tsx'))}`));
+}
+
+/**
+ * Checks if next-themes is installed by looking at package.json
+ * @returns {boolean} Whether next-themes is present in dependencies or devDependencies
+ */
+function hasNextThemes() {
+  try {
+    const packageJsonPath = path.join(process.cwd(), 'package.json');
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+    return (
+      (packageJson.dependencies && packageJson.dependencies['next-themes']) ||
+      (packageJson.devDependencies && packageJson.devDependencies['next-themes'])
+    );
+  } catch (error) {
+    return false;
+  }
 }
 
 /**
@@ -182,12 +199,19 @@ function createComponentStructure(framework, overwrite) {
  */
 function generateInboxComponentContent(framework) {
   if (framework === 'nextjs') {
-    return `'use client';
+    const hasThemes = hasNextThemes();
+    const imports = [
+      "'use client';",
+      "",
+      "import { Inbox } from '@novu/nextjs';",
+    ];
 
-import { Inbox } from '@novu/nextjs';
-import { dark } from '@novu/nextjs/themes';
-import { useTheme } from 'next-themes';
+    if (hasThemes) {
+      imports.push("import { dark } from '@novu/nextjs/themes';");
+      imports.push("import { useTheme } from 'next-themes';");
+    }
 
+    const configCode = `
 // The Novu inbox component is a React component that allows you to display a notification inbox.
 // Learn more: https://docs.novu.co/platform/inbox/overview
 
@@ -211,8 +235,9 @@ const inboxConfig = {
       // Learn more: https://docs.novu.co/platform/inbox/react/styling#elements
     }
   },
-};
+};`;
 
+    const componentCode = hasThemes ? `
 export default function NovuInbox() {
   const { resolvedTheme } = useTheme();
 
@@ -225,7 +250,12 @@ export default function NovuInbox() {
       }}
     />
   );
+}` : `
+export default function NovuInbox() {
+  return <Inbox {...inboxConfig} />;
 }`;
+
+    return `${imports.join('\n')}${configCode}${componentCode}`;
   }
 
   // React (CRA, Vite, etc.)
@@ -269,7 +299,6 @@ export default function NovuInbox() {
 }`;
 }
 
-
 /**
  * Creates or updates the .env.example file for Next.js projects.
  * @param {boolean} updateExisting - Whether to append to an existing .env.example.
@@ -308,7 +337,7 @@ NEXT_PUBLIC_NOVU_SUBSCRIBER_ID=your_subscriber_id_here
  * @param {string} framework - 'nextjs' or 'react'.
  */
 function displayNextSteps(framework) {
-  const componentImportPath = './components/ui/inbox/novuInbox'; // Updated import path
+  const componentImportPath = './components/ui/inbox/NovuInbox'; // Updated import path with new filename
 
   console.log(chalk.bold.blue('\n📝 Next Steps'));
   console.log(chalk.gray('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n'));
@@ -349,6 +378,33 @@ function displayNextSteps(framework) {
   console.log(chalk.bold.green('🎉 You\'re all set! Happy coding with Novu! 🎉\n'));
 }
 
+/**
+ * Removes the add-inbox package after successful installation.
+ * @param {object} packageManager - The package manager object { name, install }
+ */
+function removeSelf(packageManager) {
+  console.log(chalk.yellow('\n🧹 Cleaning up...'));
+  console.log(chalk.gray('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n'));
+  
+  try {
+    // Check if we're running from the source directory
+    const isSourceDir = __dirname === process.cwd();
+    
+    if (isSourceDir) {
+      console.log(chalk.blue('  • Running from source directory - skipping self-removal'));
+      console.log(chalk.gray('    This is expected when testing locally.'));
+      return;
+    }
+
+    const command = `${packageManager.name} remove add-inbox`;
+    console.log(chalk.gray(`  $ ${command}`));
+    execSync(command, { stdio: 'inherit' });
+    console.log(chalk.green('  ✓ Removed add-inbox package'));
+  } catch (error) {
+    console.log(chalk.yellow('  • Could not remove add-inbox package automatically.'));
+    console.log(chalk.gray('    You can manually remove it later if desired.'));
+  }
+}
 
 // --- Main Installation Logic ---
 async function init() {
@@ -385,6 +441,11 @@ async function init() {
     }
 
     console.log(chalk.green.bold('\n✅ Installation completed successfully!\n'));
+
+    
+    // Remove the package after successful installation
+    removeSelf(packageManager);
+
     displayNextSteps(framework);
 
   } catch (error) {
@@ -398,12 +459,11 @@ async function init() {
     if (error.stdout) {
          console.error(chalk.gray(`  Stdout: ${error.stdout.toString().trim()}`));
     }
-    // For more detailed debugging if needed:
-    // console.error(error);
     console.log(chalk.yellow('\nPlease check the error messages above. If the issue persists, consult the Novu documentation or seek support.'));
     process.exit(1);
   }
 }
+
 
 // --- Entry Point ---
 if (require.main === module) {

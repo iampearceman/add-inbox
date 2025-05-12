@@ -13,10 +13,14 @@
     "files": [
         "index.js",
         "README.md",
-        "LICENSE"
+        "LICENSE",
+        "CHANGELOG.md"
     ],
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "test": "echo \"No tests configured\" && exit 0",
+        "prepublishOnly": "npm test",
+        "version": "conventional-changelog -p angular -i CHANGELOG.md -s && git add CHANGELOG.md",
+        "postversion": "git push && git push --tags"
     },
     "keywords": [
         "novu",
@@ -34,6 +38,9 @@
         "chalk": "^4.1.2",
         "prompts": "^2.4.2"
     },
+    "devDependencies": {
+        "conventional-changelog-cli": "^4.1.0"
+    },
     "repository": {
         "type": "git",
         "url": "git+https://github.com/iampearceman/add-inbox.git"
@@ -41,5 +48,8 @@
     "bugs": {
         "url": "https://github.com/iampearceman/add-inbox/issues"
     },
-    "homepage": "https://github.com/iampearceman/add-inbox#readme"
+    "homepage": "https://github.com/iampearceman/add-inbox#readme",
+    "publishConfig": {
+        "access": "public"
+    }
 }
