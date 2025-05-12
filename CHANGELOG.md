@@ -1,3 +1,7 @@
+## [0.1.3](https://github.com/iampearceman/add-inbox/compare/v0.1.2...v0.1.3) (2025-05-12)
+
+
+
 ## 0.1.2 (2025-05-12)
 
 
