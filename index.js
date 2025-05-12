@@ -193,17 +193,45 @@ function hasNextThemes() {
 }
 
 /**
+ * Detects which auth providers are installed by checking package.json
+ * @returns {string[]} Array of detected auth providers
+ */
+function detectAuthProviders() {
+  try {
+    const packageJsonPath = path.join(process.cwd(), 'package.json');
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+    const dependencies = {
+      ...packageJson.dependencies,
+      ...packageJson.devDependencies
+    };
+
+    const providers = [];
+    if (dependencies['next-auth']) providers.push('nextauth');
+    if (dependencies['@supabase/supabase-js']) providers.push('supabase');
+    if (dependencies['@auth0/auth0-react']) providers.push('auth0');
+    if (dependencies['@clerk/nextjs'] || dependencies['@clerk/clerk-react']) providers.push('clerk');
+
+    return providers;
+  } catch (error) {
+    return [];
+  }
+}
+
+/**
  * Generates the content for the inbox.tsx component file.
  * @param {string} framework - 'nextjs' or 'react'.
  * @returns {string} The component code.
  */
 function generateInboxComponentContent(framework) {
+  const detectedProviders = detectAuthProviders();
+  const hasProviders = detectedProviders.length > 0;
+
   if (framework === 'nextjs') {
     const hasThemes = hasNextThemes();
     const imports = [
       "'use client';",
       "",
-      "import { Inbox } from '@novu/nextjs';",
+      "import { Inbox, InboxProps } from '@novu/nextjs';",
     ];
 
     if (hasThemes) {
@@ -211,20 +239,81 @@ function generateInboxComponentContent(framework) {
       imports.push("import { useTheme } from 'next-themes';");
     }
 
+    // Add auth provider imports if detected
+    if (detectedProviders.includes('nextauth')) {
+      imports.push("import { useSession } from 'next-auth/react';");
+    }
+    if (detectedProviders.includes('supabase')) {
+      imports.push("import { useSupabaseClient } from '@supabase/auth-helpers-react';");
+    }
+    if (detectedProviders.includes('auth0')) {
+      imports.push("import { useAuth0 } from '@auth0/auth0-react';");
+    }
+    if (detectedProviders.includes('clerk')) {
+      imports.push("import { useUser } from '@clerk/nextjs';");
+    }
+
     const configCode = `
 // The Novu inbox component is a React component that allows you to display a notification inbox.
 // Learn more: https://docs.novu.co/platform/inbox/overview
 
 const appId = process.env.NEXT_PUBLIC_NOVU_APP_ID;
-const subscriberId = process.env.NEXT_PUBLIC_NOVU_SUBSCRIBER_ID;
 
-if (!appId || !subscriberId) {
-  throw new Error('Novu app ID and subscriber ID must be set');
+if (!appId) {
+  throw new Error('Novu app ID must be set');
 }
 
-const inboxConfig = {
-  applicationIdentifier: appId, // The application identifier is used to identify the application that the inbox belongs to.
-  subscriberId: subscriberId, // The subscriber ID is used to identify the subscriber that the inbox belongs to.
+// Get the subscriber ID based on the auth provider
+const getSubscriberId = () => {
+${hasProviders ? `
+  // Detected auth providers: ${detectedProviders.join(', ')}
+  ${detectedProviders.includes('nextauth') ? `
+  // NextAuth.js implementation
+  const { data: session } = useSession();
+  if (session?.user?.id) return session.user.id;` : ''}
+  ${detectedProviders.includes('supabase') ? `
+  // Supabase implementation
+  const { user } = useSupabaseClient();
+  if (user?.id) return user.id;` : ''}
+  ${detectedProviders.includes('auth0') ? `
+  // Auth0 implementation
+  const { user } = useAuth0();
+  if (user?.sub) return user.sub;` : ''}
+  ${detectedProviders.includes('clerk') ? `
+  // Clerk implementation
+  const { user } = useUser();
+  if (user?.id) return user.id;` : ''}
+  
+  // If no auth provider is detected or user is not authenticated
+  throw new Error('No authenticated user found');` : `
+  // No auth providers detected. Please implement your own auth logic:
+  // Example implementations:
+  
+  // For NextAuth.js:
+  // const { data: session } = useSession();
+  // return session?.user?.id;
+  
+  // For Supabase:
+  // const { user } = useSupabaseClient();
+  // return user?.id;
+  
+  // For Auth0:
+  // const { user } = useAuth0();
+  // return user?.sub;
+  
+  // For Clerk:
+  // const { user } = useUser();
+  // return user?.id;
+  
+  // For custom implementation:
+  // return yourCustomAuthLogic();
+  
+  throw new Error('Please implement getSubscriberId based on your auth provider');`}
+};
+
+const inboxConfig: InboxProps = {
+  applicationIdentifier: appId,
+  subscriberId: getSubscriberId(),
   appearance: {
     variables: {
       // The \`variables\` object allows you to define global styling properties that can be reused throughout the inbox.
@@ -259,24 +348,87 @@ export default function NovuInbox() {
   }
 
   // React (CRA, Vite, etc.)
-  return `import React from 'react';
-import { Inbox } from '@novu/react';
-import { useNavigate } from 'react-router-dom';
+  const reactImports = [
+    "import React from 'react';",
+    "import { Inbox, InboxProps } from '@novu/react';",
+    "import { useNavigate } from 'react-router-dom';",
+  ];
+
+  // Add auth provider imports if detected
+  if (detectedProviders.includes('nextauth')) {
+    reactImports.push("import { useSession } from 'next-auth/react';");
+  }
+  if (detectedProviders.includes('supabase')) {
+    reactImports.push("import { useSupabaseClient } from '@supabase/auth-helpers-react';");
+  }
+  if (detectedProviders.includes('auth0')) {
+    reactImports.push("import { useAuth0 } from '@auth0/auth0-react';");
+  }
+  if (detectedProviders.includes('clerk')) {
+    reactImports.push("import { useUser } from '@clerk/clerk-react';");
+  }
+
+  return `${reactImports.join('\n')}
 
 const appId = process.env.REACT_APP_NOVU_APP_ID || 
               process.env.VITE_NOVU_APP_ID || 
               process.env.NOVU_APP_ID;
-const subscriberId = process.env.REACT_APP_NOVU_SUBSCRIBER_ID || 
-                    process.env.VITE_NOVU_SUBSCRIBER_ID || 
-                    process.env.NOVU_SUBSCRIBER_ID;
 
-if (!appId || !subscriberId) {
-  throw new Error('Novu app ID and subscriber ID must be set');
+if (!appId) {
+  throw new Error('Novu app ID must be set');
 }
 
-const inboxConfig = {
+// Get the subscriber ID based on the auth provider
+const getSubscriberId = () => {
+${hasProviders ? `
+  // Detected auth providers: ${detectedProviders.join(', ')}
+  ${detectedProviders.includes('nextauth') ? `
+  // NextAuth.js implementation
+  const { data: session } = useSession();
+  if (session?.user?.id) return session.user.id;` : ''}
+  ${detectedProviders.includes('supabase') ? `
+  // Supabase implementation
+  const { user } = useSupabaseClient();
+  if (user?.id) return user.id;` : ''}
+  ${detectedProviders.includes('auth0') ? `
+  // Auth0 implementation
+  const { user } = useAuth0();
+  if (user?.sub) return user.sub;` : ''}
+  ${detectedProviders.includes('clerk') ? `
+  // Clerk implementation
+  const { user } = useUser();
+  if (user?.id) return user.id;` : ''}
+  
+  // If no auth provider is detected or user is not authenticated
+  throw new Error('No authenticated user found');` : `
+  // No auth providers detected. Please implement your own auth logic:
+  // Example implementations:
+  
+  // For NextAuth.js:
+  // const { data: session } = useSession();
+  // return session?.user?.id;
+  
+  // For Supabase:
+  // const { user } = useSupabaseClient();
+  // return user?.id;
+  
+  // For Auth0:
+  // const { user } = useAuth0();
+  // return user?.sub;
+  
+  // For Clerk:
+  // const { user } = useUser();
+  // return user?.id;
+  
+  // For custom implementation:
+  // return yourCustomAuthLogic();
+  
+  throw new Error('Please implement getSubscriberId based on your auth provider');`}
+};
+
+const inboxConfig: InboxProps = {
   applicationIdentifier: appId,
-  subscriberId: subscriberId,
+  subscriberId: getSubscriberId(),
   appearance: {
     variables: {
       // The \`variables\` object allows you to define global styling properties that can be reused throughout the inbox.
@@ -308,7 +460,6 @@ function setupEnvExampleNextJs(updateExisting) {
   const envPath = path.join(process.cwd(), '.env.example');
   const envContentToAdd = `\n# Novu configuration (added by Novu Inbox Installer)
 NEXT_PUBLIC_NOVU_APP_ID=your_novu_app_id_here
-NEXT_PUBLIC_NOVU_SUBSCRIBER_ID=your_subscriber_id_here
 `;
 
   if (fs.existsSync(envPath)) {
@@ -322,7 +473,6 @@ NEXT_PUBLIC_NOVU_SUBSCRIBER_ID=your_subscriber_id_here
       console.log(chalk.yellow('  • .env.example exists. Skipping modification as Novu variables were not found and appending was not confirmed.'));
       console.log(chalk.cyan('    Please manually add Novu variables to your .env.example:'));
       console.log(chalk.cyan('    NEXT_PUBLIC_NOVU_APP_ID=your_novu_app_id_here'));
-      console.log(chalk.cyan('    NEXT_PUBLIC_NOVU_SUBSCRIBER_ID=your_subscriber_id_here'));
     }
   } else {
     fs.writeFileSync(envPath, envContentToAdd.trimStart()); // Remove leading newline if file is new
@@ -345,31 +495,28 @@ function displayNextSteps(framework) {
   console.log(chalk.blue('1. Import the Inbox component:'));
   console.log(chalk.cyan(`   import NovuInbox from '${componentImportPath}';\n`));
 
-  console.log(chalk.blue('2. Configure your environment variables (or pass as props):'));
+  console.log(chalk.blue('2. Configure your environment variables:'));
   if (framework === 'nextjs') {
     console.log(chalk.gray('   Ensure these are in your .env or .env.local file (and .env.example):'));
-    console.log(chalk.cyan('   NEXT_PUBLIC_NOVU_APP_ID=your_app_id_here'));
-    console.log(chalk.cyan('   NEXT_PUBLIC_NOVU_SUBSCRIBER_ID=your_subscriber_id_here\n'));
+    console.log(chalk.cyan('   NEXT_PUBLIC_NOVU_APP_ID=your_app_id_here\n'));
   } else {
     console.log(chalk.gray('   Ensure these are available as environment variables (e.g., in .env file):'));
     console.log(chalk.cyan('   REACT_APP_NOVU_APP_ID=your_app_id_here (for Create React App)'));
-    console.log(chalk.cyan('   VITE_NOVU_APP_ID=your_app_id_here (for Vite)'));
-    console.log(chalk.cyan('   REACT_APP_NOVU_SUBSCRIBER_ID=your_subscriber_id_here'));
-    console.log(chalk.cyan('   VITE_NOVU_SUBSCRIBER_ID=your_subscriber_id_here'));
-    console.log(chalk.gray('   Or pass them directly as props: applicationIdentifier="...", subscriberId="..."\n'));
+    console.log(chalk.cyan('   VITE_NOVU_APP_ID=your_app_id_here (for Vite)\n'));
   }
 
-  console.log(chalk.blue('3. Use the component in your app:'));
-  console.log(chalk.cyan('   <Inbox />'));
-  console.log(chalk.gray('   (Ensure props or environment variables for applicationIdentifier and subscriberId are set)\n'));
+  console.log(chalk.blue('3. Implement the getSubscriberId function:'));
+  console.log(chalk.gray('   Open the NovuInbox component and implement the getSubscriberId function'));
+  console.log(chalk.gray('   based on your chosen auth provider. Example implementations are provided in the code.\n'));
 
+  console.log(chalk.blue('4. Use the component in your app:'));
+  console.log(chalk.cyan('   <Inbox />\n'));
 
-  console.log(chalk.blue('4. Get your Novu credentials:'));
+  console.log(chalk.blue('5. Get your Novu credentials:'));
   console.log(chalk.gray('   • Visit https://web.novu.co to create an account and application.'));
-  console.log(chalk.gray('   • Find your Application Identifier in the Novu dashboard.'));
-  console.log(chalk.gray('   • Your Subscriber ID is the unique identifier for your users.\n'));
+  console.log(chalk.gray('   • Find your Application Identifier in the Novu dashboard.\n'));
 
-  console.log(chalk.blue('5. Customize your Inbox & learn more:'));
+  console.log(chalk.blue('6. Customize your Inbox & learn more:'));
   console.log(chalk.gray('   • Styling:     ') + chalk.cyan('https://docs.novu.co/platform/inbox/react/styling'));
   console.log(chalk.gray('   • Hooks:       ') + chalk.cyan('https://docs.novu.co/platform/inbox/react/hooks'));
   console.log(chalk.gray('   • Localization:') + chalk.cyan('https://docs.novu.co/platform/inbox/react/localization'));

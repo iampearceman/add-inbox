@@ -39,7 +39,6 @@
         "prompts": "^2.4.2"
     },
     "devDependencies": {
-        "conventional-changelog-cli": "^4.1.0"
     },
     "repository": {
         "type": "git",
