@@ -1,6 +1,6 @@
 {
     "name": "add-inbox",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "description": "CLI tool to add Novu's Inbox component to your project with a single command",
     "main": "index.js",
     "bin": {
