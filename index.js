@@ -351,7 +351,7 @@ export default function NovuInbox() {
   const reactImports = [
     "import React from 'react';",
     "import { Inbox, InboxProps } from '@novu/react';",
-    "import { useNavigate } from 'react-router-dom';",
+    "import { useNavigate } from 'react-router';",
   ];
 
   // Add auth provider imports if detected
@@ -370,9 +370,7 @@ export default function NovuInbox() {
 
   return `${reactImports.join('\n')}
 
-const appId = process.env.REACT_APP_NOVU_APP_ID || 
-              process.env.VITE_NOVU_APP_ID || 
-              process.env.NOVU_APP_ID;
+const appId = import.meta.env.VITE_NOVU_APP_ID;
 
 if (!appId) {
   throw new Error('Novu app ID must be set');
@@ -439,14 +437,15 @@ const inboxConfig: InboxProps = {
       // Learn more: https://docs.novu.co/platform/inbox/react/styling#elements
     }
   },
-  hooks: {
-    useNavigate: () => useNavigate(),
-  },
 };
 
-export default function NovuInbox() {
+export function NotificationCenter() {
+  const navigate = useNavigate();
+ 
   return (
-    <Inbox {...inboxConfig} />
+    <Inbox {...inboxConfig} 
+      routerPush={(path: string) => navigate(path)}
+    />
   );
 }`;
 }
@@ -480,6 +479,37 @@ NEXT_PUBLIC_NOVU_APP_ID=your_novu_app_id_here
   }
   console.log(chalk.gray('    Remember to copy .env.example to .env (or .env.local) and fill in your credentials.'));
   console.log(chalk.gray('    Ensure .env or .env.local is in your .gitignore file.'));
+}
+
+/**
+ * Creates or updates the .env.example file for React projects.
+ * @param {boolean} updateExisting - Whether to append to an existing .env.example.
+ */
+function setupEnvExampleReact(updateExisting) {
+  console.log(chalk.gray('\n• Setting up environment configuration for React...'));
+  const envPath = path.join(process.cwd(), '.env.example');
+  const envContentToAdd = `\n# Novu configuration (added by Novu Inbox Installer)
+VITE_NOVU_APP_ID=your_novu_app_id_here
+`;
+
+  if (fs.existsSync(envPath)) {
+    const existingContent = fs.readFileSync(envPath, 'utf-8');
+    if (existingContent.includes('VITE_NOVU_APP_ID=')) {
+      console.log(chalk.blue('  • Novu variables (VITE_NOVU_APP_ID) already detected in .env.example. No changes made.'));
+    } else if (updateExisting) {
+      fs.appendFileSync(envPath, envContentToAdd);
+      console.log(chalk.blue('  • Appended Novu configuration to existing .env.example'));
+    } else {
+      console.log(chalk.yellow('  • .env.example exists. Skipping modification as Novu variables were not found and appending was not confirmed.'));
+      console.log(chalk.cyan('    Please manually add Novu variables to your .env.example:'));
+      console.log(chalk.cyan('    VITE_NOVU_APP_ID=your_novu_app_id_here'));
+    }
+  } else {
+    fs.writeFileSync(envPath, envContentToAdd.trimStart()); // Remove leading newline if file is new
+    console.log(chalk.blue('  • Created .env.example with Novu configuration'));
+  }
+  console.log(chalk.gray('    Remember to copy .env.example to .env and fill in your credentials.'));
+  console.log(chalk.gray('    Ensure .env is in your .gitignore file.'));
 }
 
 /**
@@ -585,6 +615,8 @@ async function init() {
 
     if (framework === 'nextjs') {
       setupEnvExampleNextJs(updateEnvExample);
+    } else {
+      setupEnvExampleReact(updateEnvExample);
     }
 
     console.log(chalk.green.bold('\n✅ Installation completed successfully!\n'));
