@@ -23,20 +23,17 @@ async function promptUserConfiguration() {
         { title: 'React (e.g., CRA, Vite)', value: 'react' },
       ],
     },
-    {
-      type: 'select',
-      name: 'packageManager',
-      message: 'Which package manager would you like to use?',
-      choices: [
-        { title: 'npm', value: { name: 'npm', install: 'install', init: 'init -y' } },
-        { title: 'yarn', value: { name: 'yarn', install: 'add', init: 'init -y' } },
-        { title: 'pnpm', value: { name: 'pnpm', install: 'add', init: 'init' } }, // pnpm init is interactive
-      ],
-    },
   ]);
 
   // If user cancels initial prompts
-  if (!initialResponses.framework || !initialResponses.packageManager) {
+  if (!initialResponses.framework) {
+    return null;
+  }
+
+  // Detect package manager
+  const packageManager = detectPackageManager();
+  if (!packageManager) {
+    console.log(chalk.red('  ✗ Could not detect package manager. Please ensure you have a package.json file.'));
     return null;
   }
 
@@ -82,10 +79,54 @@ async function promptUserConfiguration() {
   return {
     ...initialResponses,
     ...additionalResponses,
+    packageManager,
     // Set defaults if prompts were skipped or cancelled
     overwriteComponents: additionalResponses.overwriteComponents !== undefined ? additionalResponses.overwriteComponents : false,
     updateEnvExample: additionalResponses.updateEnvExample !== undefined ? additionalResponses.updateEnvExample : (initialResponses.framework === 'nextjs' && !fs.existsSync(envExamplePath)), // Default to true if file doesn't exist
   };
+}
+
+/**
+ * Detects which package manager is being used in the project.
+ * @returns {object|null} The package manager object { name, install, init } or null if not detected
+ */
+function detectPackageManager() {
+  const cwd = process.cwd();
+  
+  // Check for lock files first
+  if (fs.existsSync(path.join(cwd, 'pnpm-lock.yaml'))) {
+    return { name: 'pnpm', install: 'add', init: 'init' };
+  }
+  if (fs.existsSync(path.join(cwd, 'yarn.lock'))) {
+    return { name: 'yarn', install: 'add', init: 'init -y' };
+  }
+  if (fs.existsSync(path.join(cwd, 'package-lock.json'))) {
+    return { name: 'npm', install: 'install', init: 'init -y' };
+  }
+
+  // If no lock file is found, check package.json for packageManager field
+  try {
+    const packageJsonPath = path.join(cwd, 'package.json');
+    if (fs.existsSync(packageJsonPath)) {
+      const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+      if (packageJson.packageManager) {
+        const [name, version] = packageJson.packageManager.split('@');
+        if (name === 'npm') {
+          return { name: 'npm', install: 'install', init: 'init -y' };
+        } else if (name === 'yarn') {
+          return { name: 'yarn', install: 'add', init: 'init -y' };
+        } else if (name === 'pnpm') {
+          return { name: 'pnpm', install: 'add', init: 'init' };
+        }
+      }
+    }
+  } catch (error) {
+    console.log(chalk.yellow('  • Could not read package.json for package manager detection'));
+  }
+
+  // If no package manager is detected, default to npm
+  console.log(chalk.yellow('  • No package manager detected, defaulting to npm'));
+  return { name: 'npm', install: 'install', init: 'init -y' };
 }
 
 /**
@@ -227,37 +268,18 @@ function generateInboxComponentContent(framework) {
   const hasProviders = detectedProviders.length > 0;
 
   if (framework === 'nextjs') {
-    const hasThemes = hasNextThemes();
     const imports = [
       "'use client';",
       "",
-      "import { Inbox, InboxProps } from '@novu/nextjs';",
+      "import { Inbox } from '@novu/nextjs';",
+      "import { dark } from '@novu/nextjs/themes';",
     ];
 
-    if (hasThemes) {
-      imports.push("import { dark } from '@novu/nextjs/themes';");
-      imports.push("import { useTheme } from 'next-themes';");
-    }
-
-    // Add auth provider imports if detected
-    if (detectedProviders.includes('nextauth')) {
-      imports.push("import { useSession } from 'next-auth/react';");
-    }
-    if (detectedProviders.includes('supabase')) {
-      imports.push("import { useSupabaseClient } from '@supabase/auth-helpers-react';");
-    }
-    if (detectedProviders.includes('auth0')) {
-      imports.push("import { useAuth0 } from '@auth0/auth0-react';");
-    }
-    if (detectedProviders.includes('clerk')) {
-      imports.push("import { useUser } from '@clerk/nextjs';");
-    }
-
-    const configCode = `
+    return `${imports.join('\n')}
 // The Novu inbox component is a React component that allows you to display a notification inbox.
 // Learn more: https://docs.novu.co/platform/inbox/overview
 
-const appId = process.env.NEXT_PUBLIC_NOVU_APP_ID;
+const appId = process.env.NEXT_PUBLIC_NOVU_APP_ID as string;
 
 if (!appId) {
   throw new Error('Novu app ID must be set');
@@ -311,10 +333,14 @@ ${hasProviders ? `
   throw new Error('Please implement getSubscriberId based on your auth provider');`}
 };
 
-const inboxConfig: InboxProps = {
-  applicationIdentifier: appId,
-  subscriberId: getSubscriberId(),
-  appearance: {
+
+export default function NovuInbox() {
+  return <Inbox 
+  applicationIdentifier={appId} 
+  subscriberId={getSubscriberId()} 
+  appearance={{
+    // To use dark theme, uncomment the following line:
+    // baseTheme: dark,
     variables: {
       // The \`variables\` object allows you to define global styling properties that can be reused throughout the inbox.
       // Learn more: https://docs.novu.co/platform/inbox/react/styling#variables
@@ -322,29 +348,12 @@ const inboxConfig: InboxProps = {
     elements: {
       // The \`elements\` object allows you to define styles for these components.
       // Learn more: https://docs.novu.co/platform/inbox/react/styling#elements
-    }
-  },
-};`;
-
-    const componentCode = hasThemes ? `
-export default function NovuInbox() {
-  const { resolvedTheme } = useTheme();
-
-  return (
-    <Inbox 
-      {...inboxConfig} 
-      appearance={{ 
-        ...inboxConfig.appearance,
-        baseTheme: resolvedTheme === 'dark' ? dark : undefined 
-      }}
-    />
-  );
-}` : `
-export default function NovuInbox() {
-  return <Inbox {...inboxConfig} />;
+    },
+    icons: {
+      // The \`icons\` object allows you to define custom icons for the inbox.
+    },
+  }} />;
 }`;
-
-    return `${imports.join('\n')}${configCode}${componentCode}`;
   }
 
   // React (CRA, Vite, etc.)
@@ -456,17 +465,19 @@ export function NotificationCenter() {
  */
 function setupEnvExampleNextJs(updateExisting) {
   console.log(chalk.gray('\n• Setting up environment configuration for Next.js...'));
-  const envPath = path.join(process.cwd(), '.env.example');
+  const envExamplePath = path.join(process.cwd(), '.env.example');
+  const envLocalPath = path.join(process.cwd(), '.env.local');
   const envContentToAdd = `\n# Novu configuration (added by Novu Inbox Installer)
 NEXT_PUBLIC_NOVU_APP_ID=your_novu_app_id_here
 `;
 
-  if (fs.existsSync(envPath)) {
-    const existingContent = fs.readFileSync(envPath, 'utf-8');
+  // Handle .env.example
+  if (fs.existsSync(envExamplePath)) {
+    const existingContent = fs.readFileSync(envExamplePath, 'utf-8');
     if (existingContent.includes('NEXT_PUBLIC_NOVU_APP_ID=')) {
       console.log(chalk.blue('  • Novu variables (NEXT_PUBLIC_NOVU_APP_ID) already detected in .env.example. No changes made.'));
     } else if (updateExisting) {
-      fs.appendFileSync(envPath, envContentToAdd);
+      fs.appendFileSync(envExamplePath, envContentToAdd);
       console.log(chalk.blue('  • Appended Novu configuration to existing .env.example'));
     } else {
       console.log(chalk.yellow('  • .env.example exists. Skipping modification as Novu variables were not found and appending was not confirmed.'));
@@ -474,11 +485,26 @@ NEXT_PUBLIC_NOVU_APP_ID=your_novu_app_id_here
       console.log(chalk.cyan('    NEXT_PUBLIC_NOVU_APP_ID=your_novu_app_id_here'));
     }
   } else {
-    fs.writeFileSync(envPath, envContentToAdd.trimStart()); // Remove leading newline if file is new
+    fs.writeFileSync(envExamplePath, envContentToAdd.trimStart()); // Remove leading newline if file is new
     console.log(chalk.blue('  • Created .env.example with Novu configuration'));
   }
-  console.log(chalk.gray('    Remember to copy .env.example to .env (or .env.local) and fill in your credentials.'));
-  console.log(chalk.gray('    Ensure .env or .env.local is in your .gitignore file.'));
+
+  // Handle .env.local
+  if (fs.existsSync(envLocalPath)) {
+    const existingContent = fs.readFileSync(envLocalPath, 'utf-8');
+    if (existingContent.includes('NEXT_PUBLIC_NOVU_APP_ID=')) {
+      console.log(chalk.blue('  • Novu variables (NEXT_PUBLIC_NOVU_APP_ID) already detected in .env.local. No changes made.'));
+    } else {
+      fs.appendFileSync(envLocalPath, envContentToAdd);
+      console.log(chalk.blue('  • Appended Novu configuration to existing .env.local'));
+    }
+  } else {
+    fs.writeFileSync(envLocalPath, envContentToAdd.trimStart()); // Remove leading newline if file is new
+    console.log(chalk.blue('  • Created .env.local with Novu configuration'));
+  }
+
+  console.log(chalk.gray('    Remember to fill in your Novu credentials in .env.local.'));
+  console.log(chalk.gray('    Ensure .env.local is in your .gitignore file.'));
 }
 
 /**
