@@ -1,12 +1,32 @@
 {
     "name": "add-inbox",
-    "version": "0.1.7",
-    "description": "CLI tool to add Novu's Inbox component to your project with a single command",
-    "main": "index.js",
+    "version": "0.1.8",
+    "description": "CLI tool to add Novu Inbox to your React or Next.js project",
+    "main": "src/cli/index.js",
     "bin": {
-        "add-inbox": "index.js"
+        "add-inbox": "./src/cli/index.js"
     },
-    "preferGlobal": true,
+    "scripts": {
+        "start": "node src/cli/index.js",
+        "test": "jest"
+    },
+    "keywords": [
+        "novu",
+        "inbox",
+        "notifications",
+        "react",
+        "nextjs",
+        "cli"
+    ],
+    "author": "Novu",
+    "license": "MIT",
+    "dependencies": {
+        "chalk": "^4.1.2",
+        "prompts": "^2.4.2"
+    },
+    "devDependencies": {
+        "jest": "^29.0.0"
+    },
     "engines": {
         "node": ">=14.0.0"
     },
@@ -16,31 +36,7 @@
         "LICENSE",
         "CHANGELOG.md"
     ],
-    "scripts": {
-        "test": "echo \"No tests configured\" && exit 0",
-        "prepublishOnly": "npm test",
-        "version": "conventional-changelog -p angular -i CHANGELOG.md -s && git add CHANGELOG.md",
-        "postversion": "git push && git push --tags"
-    },
-    "keywords": [
-        "novu",
-        "inbox",
-        "notifications",
-        "cli",
-        "component",
-        "react",
-        "nextjs",
-        "tailwind"
-    ],
-    "author": "Emil Pearce",
-    "license": "MIT",
-    "dependencies": {
-        "chalk": "^4.1.2",
-        "prompts": "^2.4.2"
-    },
-    "devDependencies": {
-        "conventional-changelog-cli": "^5.0.0"
-    },
+    "preferGlobal": true,
     "repository": {
         "type": "git",
         "url": "git+https://github.com/iampearceman/add-inbox.git"
