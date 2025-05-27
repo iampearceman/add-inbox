@@ -272,78 +272,54 @@ function generateInboxComponentContent(framework) {
       "'use client';",
       "",
       "import { Inbox } from '@novu/nextjs';",
-      "import { dark } from '@novu/nextjs/themes';",
+      "// import { dark } from '@novu/nextjs/themes';",
+      "// import { useTheme } from 'next-themes';",
     ];
 
     return `${imports.join('\n')}
 // The Novu inbox component is a React component that allows you to display a notification inbox.
 // Learn more: https://docs.novu.co/platform/inbox/overview
 
-const appId = process.env.NEXT_PUBLIC_NOVU_APP_ID as string;
-
-if (!appId) {
-  throw new Error('Novu app ID must be set');
-}
-
-// Get the subscriber ID based on the auth provider
-const getSubscriberId = () => {
-${hasProviders ? `
-  // Detected auth providers: ${detectedProviders.join(', ')}
-  ${detectedProviders.includes('nextauth') ? `
-  // NextAuth.js implementation
-  const { data: session } = useSession();
-  if (session?.user?.id) return session.user.id;` : ''}
-  ${detectedProviders.includes('supabase') ? `
-  // Supabase implementation
-  const { user } = useSupabaseClient();
-  if (user?.id) return user.id;` : ''}
-  ${detectedProviders.includes('auth0') ? `
-  // Auth0 implementation
-  const { user } = useAuth0();
-  if (user?.sub) return user.sub;` : ''}
-  ${detectedProviders.includes('clerk') ? `
-  // Clerk implementation
-  const { user } = useUser();
-  if (user?.id) return user.id;` : ''}
-  
-  // If no auth provider is detected or user is not authenticated
-  throw new Error('No authenticated user found');` : `
-  // No auth providers detected. Please implement your own auth logic:
-  // Example implementations:
-  
-  // For NextAuth.js:
-  // const { data: session } = useSession();
-  // return session?.user?.id;
-  
-  // For Supabase:
-  // const { user } = useSupabaseClient();
-  // return user?.id;
-  
-  // For Auth0:
-  // const { user } = useAuth0();
-  // return user?.sub;
-  
-  // For Clerk:
-  // const { user } = useUser();
-  // return user?.id;
-  
-  // For custom implementation:
-  // return yourCustomAuthLogic();
-  
-  throw new Error('Please implement getSubscriberId based on your auth provider');`}
-};
-
+const tabs = [
+  {
+    label: 'All',
+    filter: { tags: [] },
+  },
+  {
+    label: 'Product Updates',
+    filter: { tags: ['product-updates'] },
+  },
+  {
+    label: 'Billing',
+    filter: { tags: ['billing'] },
+  },
+];
 
 export default function NovuInbox() {
-  return <Inbox 
-  applicationIdentifier={appId} 
-  subscriberId={getSubscriberId()} 
+  // const { resolvedTheme } = useTheme();
+
+  return <Inbox
+  // applicationIdentifier={process.env.NEXT_PUBLIC_NOVU_APP_ID as string}
+  // subscriberId="user-123" // The subscriber id is the user id from auth provider
+  tabs={tabs}
   appearance={{
-    // To use dark theme, uncomment the following line:
-    // baseTheme: dark,
+    // baseTheme: resolvedTheme === 'dark' ? dark : undefined,
     variables: {
       // The \`variables\` object allows you to define global styling properties that can be reused throughout the inbox.
       // Learn more: https://docs.novu.co/platform/inbox/react/styling#variables
+
+      // colorPrimary: '',
+      // colorSecondary: '',
+      // colorPrimaryForeground: '',
+      // colorSecondaryForeground: '',
+      // colorForeground: '',
+      // colorBackground: '',
+      // colorNeutral: '',
+      // colorCounter: '',
+      // colorCounterForeground: '',
+      // colorShadow: '',
+      // borderRadius: '',
+      // fontSize: '',
     },
     elements: {
       // The \`elements\` object allows you to define styles for these components.
@@ -352,7 +328,8 @@ export default function NovuInbox() {
     icons: {
       // The \`icons\` object allows you to define custom icons for the inbox.
     },
-  }} />;
+  }} 
+  />;
 }`;
   }
 
