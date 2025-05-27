@@ -7,7 +7,7 @@ A CLI command to easily add Novu's notification inbox component to your React or
 You can use this tool without installing it by running:
 
 ```bash
-npx add-inbox@latest init
+npx add-inbox@latest
 ```
 
 This will guide you through an interactive process to add the Novu Inbox component to your project.
@@ -24,7 +24,7 @@ This will guide you through an interactive process to add the Novu Inbox compone
 ## Demo
 
 ```
-$ npx add-inbox@latest init
+$ npx add-inbox@latest
 
 🔔 Novu Inbox Component Installer
 
