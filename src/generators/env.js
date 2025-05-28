@@ -7,7 +7,7 @@ function setupEnvExampleNextJs(updateExisting) {
   const envExamplePath = fileUtils.joinPaths(process.cwd(), '.env.example');
   const envLocalPath = fileUtils.joinPaths(process.cwd(), '.env.local');
   const envContentToAdd = `\n# Novu configuration (added by Novu Inbox Installer)
-${ENV_VARIABLES.NEXTJS.APP_ID}=your_novu_app_id_here
+${ENV_VARIABLES.NEXTJS.APP_ID}=
 `;
 
   // Handle .env.example
@@ -21,7 +21,7 @@ ${ENV_VARIABLES.NEXTJS.APP_ID}=your_novu_app_id_here
     } else {
       logger.warning('  • .env.example exists. Skipping modification as Novu variables were not found and appending was not confirmed.');
       logger.cyan('    Please manually add Novu variables to your .env.example:');
-      logger.cyan(`    ${ENV_VARIABLES.NEXTJS.APP_ID}=your_novu_app_id_here`);
+      logger.cyan(`    ${ENV_VARIABLES.NEXTJS.APP_ID}=`);
     }
   } else {
     fileUtils.writeFile(envExamplePath, envContentToAdd.trimStart());
@@ -50,7 +50,7 @@ function setupEnvExampleReact(updateExisting) {
   logger.gray('• Setting up environment configuration for React...');
   const envPath = fileUtils.joinPaths(process.cwd(), '.env.example');
   const envContentToAdd = `\n# Novu configuration (added by Novu Inbox Installer)
-${ENV_VARIABLES.REACT.APP_ID}=your_novu_app_id_here
+${ENV_VARIABLES.REACT.APP_ID}=
 `;
 
   if (fileUtils.exists(envPath)) {
@@ -63,7 +63,7 @@ ${ENV_VARIABLES.REACT.APP_ID}=your_novu_app_id_here
     } else {
       logger.warning('  • .env.example exists. Skipping modification as Novu variables were not found and appending was not confirmed.');
       logger.cyan('    Please manually add Novu variables to your .env.example:');
-      logger.cyan(`    ${ENV_VARIABLES.REACT.APP_ID}=your_novu_app_id_here`);
+      logger.cyan(`    ${ENV_VARIABLES.REACT.APP_ID}=`);
     }
   } else {
     fileUtils.writeFile(envPath, envContentToAdd.trimStart());

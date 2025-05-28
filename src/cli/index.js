@@ -195,9 +195,6 @@ async function init() {
 
     logger.success('\n✅ Installation completed successfully!\n');
 
-    logger.blue('🧹 Step 6: Cleaning up...');
-    removeSelf(packageManager);
-
     displayNextSteps(framework);
 
   } catch (error) {

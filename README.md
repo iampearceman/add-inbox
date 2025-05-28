@@ -58,14 +58,11 @@ Make sure to set up your Novu application ID:
 For React:
 ```
 NOVU_APP_ID=your_app_id_here
-NOVU_SUBSCRIBER_ID=your_subscriber_id_here
-
 ```
 
 For Next.js:
 ```
 NEXT_PUBLIC_NOVU_APP_ID=your_novu_app_id_here
-NEXT_PUBLIC_NOVU_SUBSCRIBER_ID=your_subscriber_id_here
 ```
 
 ## License
