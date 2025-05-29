@@ -162,6 +162,16 @@ async function init() {
   logger.banner();
 
   logger.blue('🔍 Step 1: Detecting project configuration...');
+  
+  // Check if we're in a project directory first
+  const packageJsonPath = fileUtils.joinPaths(process.cwd(), 'package.json');
+  if (!fileUtils.exists(packageJsonPath)) {
+    logger.error('\n❌ No project detected.');
+    logger.warning('This tool must be run within a React or Next.js project directory.');
+    logger.gray('\nPlease ensure you are in your project directory before running this command.');
+    process.exit(1);
+  }
+
   const config = await promptUserConfiguration();
 
   if (!config) {
