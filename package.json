@@ -1,10 +1,10 @@
 {
     "name": "add-inbox",
-    "version": "0.1.11",
+    "version": "0.1.14",
     "description": "CLI tool to add Novu Inbox to your React or Next.js project",
-    "main": "index.js",
+    "main": "src/cli/index.js",
     "bin": {
-        "add-inbox": "index.js"
+        "add-inbox": "src/cli/index.js"
     },
     "scripts": {
         "start": "node src/cli/index.js"

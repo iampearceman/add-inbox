@@ -8,6 +8,7 @@ const logger = {
   gray: (message) => console.log(chalk.gray(message)),
   cyan: (message) => console.log(chalk.cyan(message)),
   blue: (message) => console.log(chalk.blue(message)),
+  yellow: (message) => console.log(chalk.yellow(message)),
   bold: (message) => chalk.bold(message),
   
   step: (number, title) => {

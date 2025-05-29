@@ -21,20 +21,6 @@ This will guide you through an interactive process to add the Novu Inbox compone
 - ✅ Component creation in your project's component directory
 - ✅ Environment variable setup for Novu configuration
 
-## Demo
-
-```
-$ npx add-inbox@latest
-
-🔔 Novu Inbox Component Installer
-
-? What framework are you using? › 
-❯ React
-  Next.js
-
-? Are you using TypeScript? › (Y/n)
-```
-
 ## Example Usage in Your App
 
 ```jsx
@@ -45,7 +31,7 @@ return (
   <div>
     <header className="flex justify-between items-center">
       <h1>My App</h1>
-      <Inbox />
+      <NovuInbox />
     </header>
   </div>
 );

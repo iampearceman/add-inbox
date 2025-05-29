@@ -128,28 +128,14 @@ function displayNextSteps(framework) {
   logger.blue('1. Import the Inbox component:');
   logger.cyan(`   import NovuInbox from '${componentImportPath}';\n`);
 
-  logger.blue('2. Configure your environment variables:');
-  if (framework === FRAMEWORKS.NEXTJS) {
-    logger.gray('   Ensure these are in your .env or .env.local file (and .env.example):');
-    logger.cyan('   NEXT_PUBLIC_NOVU_APP_ID=your_app_id_here\n');
-  } else {
-    logger.gray('   Ensure these are available as environment variables (e.g., in .env file):');
-    logger.cyan('   REACT_APP_NOVU_APP_ID=your_app_id_here (for Create React App)');
-    logger.cyan('   VITE_NOVU_APP_ID=your_app_id_here (for Vite)\n');
-  }
-
-  logger.blue('3. Implement the getSubscriberId function:');
-  logger.gray('   Open the NovuInbox component and implement the getSubscriberId function');
-  logger.gray('   based on your chosen auth provider. Example implementations are provided in the code.\n');
-
-  logger.blue('4. Use the component in your app:');
+  logger.blue('2. Use the component in your app:');
   logger.cyan('   <Inbox />\n');
 
-  logger.blue('5. Get your Novu credentials:');
+  logger.blue('3. Get your Novu credentials:');
   logger.gray('   • Visit https://web.novu.co to create an account and application.');
   logger.gray('   • Find your Application Identifier in the Novu dashboard.\n');
 
-  logger.blue('6. Customize your Inbox & learn more:');
+  logger.blue('4. Customize your Inbox & learn more:');
   logger.gray('   • Styling:     ') + logger.cyan('https://docs.novu.co/platform/inbox/react/styling');
   logger.gray('   • Hooks:       ') + logger.cyan('https://docs.novu.co/platform/inbox/react/hooks');
   logger.gray('   • Localization:') + logger.cyan('https://docs.novu.co/platform/inbox/react/localization');
