@@ -1,14 +1,13 @@
 {
     "name": "add-inbox",
-    "version": "0.1.8-patch.1",
+    "version": "0.1.10",
     "description": "CLI tool to add Novu Inbox to your React or Next.js project",
-    "main": "src/cli/index.js",
+    "main": "index.js",
     "bin": {
-        "add-inbox": "src/cli/index.js"
+        "add-inbox": "index.js"
     },
     "scripts": {
-        "start": "node src/cli/index.js",
-        "test": "jest"
+        "start": "node src/cli/index.js"
     },
     "keywords": [
         "novu",
@@ -24,14 +23,12 @@
         "chalk": "^4.1.2",
         "prompts": "^2.4.2"
     },
-    "devDependencies": {
-        "jest": "^29.0.0"
-    },
+    "devDependencies": {},
     "engines": {
         "node": ">=14.0.0"
     },
     "files": [
-        "index.js",
+        "src",
         "README.md",
         "LICENSE",
         "CHANGELOG.md"
