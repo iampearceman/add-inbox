@@ -1,81 +1,132 @@
-const { FRAMEWORKS } = require('../constants');
-const fileUtils = require('../utils/file');
+const fs = require('fs');
+const path = require('path');
 const logger = require('../utils/logger');
+const { FRAMEWORKS } = require('../constants');
 
-function detectFramework() {
-  const cwd = process.cwd();
-  
-  logger.gray('  • Checking for framework...');
+/**
+ * Configuration and Constants
+ */
+const MIN_VERSIONS = {
+  [FRAMEWORKS.REACT]: 16,
+  [FRAMEWORKS.NEXTJS]: 12
+};
 
-  // First check package.json for framework dependencies
+const FRAMEWORK_SETUPS = {
+  [FRAMEWORKS.NEXTJS]: 'App Router',
+  [FRAMEWORKS.REACT]: 'Create React App'
+};
+
+/**
+ * File System Operations
+ */
+
+/**
+ * Reads and parses package.json
+ * @returns {Object|null} The parsed package.json or null if not found/invalid
+ */
+function getPackageJson() {
   try {
-    const packageJsonPath = fileUtils.joinPaths(cwd, 'package.json');
-    if (fileUtils.exists(packageJsonPath)) {
-      const packageJson = fileUtils.readJson(packageJsonPath);
-      const dependencies = {
-        ...packageJson.dependencies,
-        ...packageJson.devDependencies
+    const packageJsonPath = path.join(process.cwd(), 'package.json');
+    if (!fs.existsSync(packageJsonPath)) {
+      return null;
+    }
+    return JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+  } catch (error) {
+    logger.warning('Failed to read package.json:', error.message);
+    return null;
+  }
+}
+
+/**
+ * Version Management
+ */
+
+/**
+ * Extracts the version of a framework from package.json
+ * @param {Object} packageJson - The parsed package.json
+ * @param {string} framework - The framework to check
+ * @returns {string|null} The framework version or null if not found
+ */
+function getFrameworkVersion(packageJson, framework) {
+  const dependencies = {
+    ...packageJson.dependencies,
+    ...packageJson.devDependencies
+  };
+
+  const version = dependencies[framework];
+  if (!version) return null;
+
+  // Remove any ^ or ~ from version
+  return version.replace(/[\^~]/, '');
+}
+
+/**
+ * Validates if a framework version meets minimum requirements
+ * @param {string} version - The version to validate
+ * @param {string} framework - The framework being validated
+ * @returns {boolean} Whether the version is valid
+ */
+function validateFrameworkVersion(version, framework) {
+  if (!version) return false;
+
+  const [major] = version.split('.');
+  return parseInt(major) >= MIN_VERSIONS[framework];
+}
+
+/**
+ * Framework Detection
+ */
+
+/**
+ * Detects the framework and its version from the project
+ * @returns {Object|null} Framework information or null if not detected
+ */
+function detectFramework() {
+  const packageJson = getPackageJson();
+  if (!packageJson) {
+    return null;
+  }
+
+  // Check for Next.js first
+  const nextVersion = getFrameworkVersion(packageJson, 'next');
+  if (nextVersion && validateFrameworkVersion(nextVersion, FRAMEWORKS.NEXTJS)) {
+    return {
+      framework: FRAMEWORKS.NEXTJS,
+      version: nextVersion,
+      setup: FRAMEWORK_SETUPS[FRAMEWORKS.NEXTJS]
+    };
+  }
+
+  // Check for React
+  const reactVersion = getFrameworkVersion(packageJson, 'react');
+  if (reactVersion && validateFrameworkVersion(reactVersion, FRAMEWORKS.REACT)) {
+    return {
+      framework: FRAMEWORKS.REACT,
+      version: reactVersion,
+      setup: FRAMEWORK_SETUPS[FRAMEWORKS.REACT]
+    };
+  }
+
+  // Additional checks for Next.js in case it's not in package.json
+  try {
+    const nextConfigPath = path.join(process.cwd(), 'next.config.js');
+    if (fs.existsSync(nextConfigPath)) {
+      return {
+        framework: FRAMEWORKS.NEXTJS,
+        version: 'latest', // We can't determine version without package.json
+        setup: FRAMEWORK_SETUPS[FRAMEWORKS.NEXTJS]
       };
-
-      logger.gray('    - Dependencies found:');
-      logger.gray(`      next: ${!!dependencies.next}`);
-      logger.gray(`      react: ${!!dependencies.react}`);
-      logger.gray(`      react-router-dom: ${!!dependencies['react-router-dom']}`);
-      logger.gray(`      react-router: ${!!dependencies['react-router']}`);
-      logger.gray(`      vite: ${!!dependencies.vite}`);
-      logger.gray(`      react-scripts: ${!!dependencies['react-scripts']}`);
-
-      // Check for Next.js first
-      if (dependencies.next) {
-        logger.gray('    → Detected Next.js from dependencies');
-        return FRAMEWORKS.NEXTJS;
-      }
-
-      // Then check for React and its common setups
-      if (dependencies.react) {
-        // Check for React Router
-        if (dependencies['react-router-dom'] || dependencies['react-router']) {
-          logger.gray('    → Detected React with React Router');
-          return FRAMEWORKS.REACT;
-        }
-        // Check if it's a Vite project
-        if (dependencies.vite) {
-          logger.gray('    → Detected React with Vite');
-          return FRAMEWORKS.REACT;
-        }
-        // Check if it's a Create React App project
-        if (dependencies['react-scripts']) {
-          logger.gray('    → Detected React with Create React App');
-          return FRAMEWORKS.REACT;
-        }
-        // If it has React but no specific framework, assume it's a React project
-        logger.gray('    → Detected basic React project');
-        return FRAMEWORKS.REACT;
-      }
     }
   } catch (error) {
-    logger.warning('  • Could not read package.json for framework detection');
-    logger.gray(`    Error: ${error.message}`);
+    logger.warning('Failed to check for next.config.js:', error.message);
   }
 
-  // Only check for Next.js specific files if no framework was detected from dependencies
-  const nextConfigJs = fileUtils.exists(fileUtils.joinPaths(cwd, 'next.config.js'));
-  const nextConfigMjs = fileUtils.exists(fileUtils.joinPaths(cwd, 'next.config.mjs'));
-  const appDir = fileUtils.exists(fileUtils.joinPaths(cwd, 'app'));
-  const pagesDir = fileUtils.exists(fileUtils.joinPaths(cwd, 'pages'));
-  
-  logger.gray(`    - Next.js config files: ${nextConfigJs || nextConfigMjs}`);
-  logger.gray(`    - Next.js app/pages dirs: ${appDir || pagesDir}`);
-
-  if (nextConfigJs || nextConfigMjs || appDir || pagesDir) {
-    logger.gray('    → Detected Next.js from file structure');
-    return FRAMEWORKS.NEXTJS;
-  }
-
-  logger.gray('    → No framework detected');
   return null;
 }
 
 module.exports = {
-  detectFramework
+  detectFramework,
+  validateFrameworkVersion,
+  MIN_VERSIONS,
+  FRAMEWORK_SETUPS
 }; 

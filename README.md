@@ -54,3 +54,10 @@ NEXT_PUBLIC_NOVU_APP_ID=your_novu_app_id_here
 ## License
 
 MIT
+
+## Tested
+[v] next-v12
+[v] next-v13
+[v] next-v14
+[v] next-v15
+[] next-v15 -no-app-router

@@ -41,7 +41,15 @@ const fileUtils = {
     fs.rmSync(dirPath, { recursive: true, force: true });
   },
   
-  joinPaths: (...paths) => path.join(...paths)
+  joinPaths: (...paths) => path.join(...paths),
+
+  copyFile: (sourcePath, targetPath) => {
+    fs.copyFileSync(sourcePath, targetPath);
+  },
+
+  deleteFile: (filePath) => {
+    fs.unlinkSync(filePath);
+  }
 };
 
 module.exports = fileUtils; 

@@ -9,13 +9,6 @@ const PACKAGE_MANAGERS = {
   PNPM: 'pnpm'
 };
 
-const AUTH_PROVIDERS = {
-  NEXTAUTH: 'nextauth',
-  SUPABASE: 'supabase',
-  AUTH0: 'auth0',
-  CLERK: 'clerk'
-};
-
 const ENV_VARIABLES = {
   NEXTJS: {
     APP_ID: 'NEXT_PUBLIC_NOVU_APP_ID'
@@ -28,6 +21,5 @@ const ENV_VARIABLES = {
 module.exports = {
   FRAMEWORKS,
   PACKAGE_MANAGERS,
-  AUTH_PROVIDERS,
   ENV_VARIABLES
 }; 

@@ -6,13 +6,13 @@ const logger = {
   warning: (message) => console.log(chalk.yellow(message)),
   error: (message) => console.log(chalk.red(message)),
   gray: (message) => console.log(chalk.gray(message)),
-  cyan: (message) => console.log(chalk.cyan(message)),
-  blue: (message) => console.log(chalk.blue(message)),
-  yellow: (message) => console.log(chalk.yellow(message)),
+  cyan: (message) => chalk.cyan(message),
+  blue: (message) => chalk.blue(message),
+  yellow: (message) => chalk.yellow(message),
   bold: (message) => chalk.bold(message),
   
   step: (number, title) => {
-    console.log('\n' + chalk.blue(`📝 Step ${number}: ${title}`));
+    console.log('\n' + chalk.blue(`Step ${number}: ${title}`));
   },
   
   divider: () => {
