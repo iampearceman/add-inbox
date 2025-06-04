@@ -1,17 +1,37 @@
 #!/usr/bin/env node
 
-const { execSync } = require('child_process');
-const prompts = require('prompts');
-const { program } = require('commander');
-const logger = require('../utils/logger');
-const fileUtils = require('../utils/file');
-const { detectFramework } = require('../config/framework');
-const { detectPackageManager, ensurePackageJson } = require('../config/package-manager');
-const { createComponentStructure } = require('../generators/component');
-const { setupEnvExampleNextJs, setupEnvExampleReact } = require('../generators/env');
-const { FRAMEWORKS } = require('../constants');
+import { execSync } from 'child_process';
+import prompts from 'prompts';
+import { program } from 'commander';
+import logger from '../utils/logger';
+import fileUtils from '../utils/file';
+import { detectFramework, Framework } from '../config/framework';
+import { detectPackageManager, ensurePackageJson } from '../config/package-manager';
+import { createComponentStructure } from '../generators/component';
+import { setupEnvExampleNextJs, setupEnvExampleReact } from '../generators/env';
+import { FRAMEWORKS } from '../constants';
 
-async function promptUserConfiguration() {
+interface PackageManager {
+  name: string;
+  install: string;
+}
+
+interface UserConfig {
+  framework: Framework;
+  appId?: string;
+  subscriberId?: string;
+  region: string;
+  packageManager: PackageManager;
+  overwriteComponents: boolean;
+  updateEnvExample: boolean;
+}
+
+interface PromptResponse {
+  overwriteComponents?: boolean;
+  updateEnvExample?: boolean;
+}
+
+async function promptUserConfiguration(): Promise<UserConfig | null> {
   // Parse command line arguments
   const { appId, subscriberId, region } = parseCommandLineArgs();
   
@@ -27,7 +47,7 @@ async function promptUserConfiguration() {
   }
 
   // Use detected framework directly without prompting
-  const initialResponses = {
+  const initialResponses: Partial<UserConfig> = {
     framework: detectedFramework,
     appId,
     subscriberId,
@@ -41,7 +61,7 @@ async function promptUserConfiguration() {
     return null;
   }
 
-  const additionalPrompts = [];
+  const additionalPrompts: prompts.PromptObject[] = [];
   const cwd = process.cwd();
   const srcDir = fileUtils.joinPaths(cwd, 'src');
   const appDir = fileUtils.joinPaths(cwd, 'app');
@@ -69,14 +89,14 @@ async function promptUserConfiguration() {
   }
 
   const envExamplePath = fileUtils.joinPaths(process.cwd(), '.env.example');
-  const envPath = fileUtils.joinPaths(process.cwd(), initialResponses.framework === FRAMEWORKS.NEXTJS ? '.env.local' : '.env');
+  const envPath = fileUtils.joinPaths(process.cwd(), initialResponses.framework?.framework === FRAMEWORKS.NEXTJS ? '.env.local' : '.env');
   
   // Check if environment files exist and need updating
   if (fileUtils.exists(envExamplePath)) {
     const envExampleContent = fileUtils.readFile(envExamplePath);
-    const envVarName = initialResponses.framework === FRAMEWORKS.NEXTJS ? 'NEXT_PUBLIC_NOVU_APP_ID' : 'VITE_NOVU_APP_ID';
+    const envVarName = initialResponses.framework?.framework === FRAMEWORKS.NEXTJS ? 'NEXT_PUBLIC_NOVU_APP_ID' : 'VITE_NOVU_APP_ID';
     
-    if (!envExampleContent.includes(envVarName)) {
+    if (envExampleContent && !envExampleContent.includes(envVarName)) {
       additionalPrompts.push({
         type: 'confirm',
         name: 'updateEnvExample',
@@ -89,7 +109,7 @@ async function promptUserConfiguration() {
     }
   }
 
-  let additionalResponses = {};
+  let additionalResponses: PromptResponse = {};
   if (additionalPrompts.length > 0) {
     try {
       additionalResponses = await prompts(additionalPrompts);
@@ -117,10 +137,10 @@ async function promptUserConfiguration() {
     // Set defaults if prompts were skipped or cancelled
     overwriteComponents: additionalResponses.overwriteComponents !== undefined ? additionalResponses.overwriteComponents : false,
     updateEnvExample: additionalResponses.updateEnvExample !== undefined ? additionalResponses.updateEnvExample : !fileUtils.exists(envExamplePath), // Default to true if file doesn't exist
-  };
+  } as UserConfig;
 }
 
-async function checkDependencyExists(packageName) {
+async function checkDependencyExists(packageName: string): Promise<boolean> {
   try {
     const packageJsonPath = fileUtils.joinPaths(process.cwd(), 'package.json');
     if (await fileUtils.exists(packageJsonPath)) {
@@ -137,10 +157,10 @@ async function checkDependencyExists(packageName) {
   return false;
 }
 
-function installDependencies(framework, packageManager) {
+function installDependencies(framework: Framework, packageManager: PackageManager): void {
   logger.gray('• Installing required packages...');
 
-  let packagesToInstall = [];
+  const packagesToInstall: string[] = [];
   
   // Always install latest version of Novu packages
   if (framework.framework === FRAMEWORKS.NEXTJS) {
@@ -177,8 +197,8 @@ function installDependencies(framework, packageManager) {
         ...packageJson.devDependencies
       };
 
-      const missingPackages = [];
-      const versionMismatches = [];
+      const missingPackages: string[] = [];
+      const versionMismatches: string[] = [];
 
       for (const pkg of packagesToInstall) {
         // Correctly extract package name and version for scoped packages
@@ -241,14 +261,14 @@ function installDependencies(framework, packageManager) {
         fileUtils.deleteFile(backupPath);
       }
 
-      throw new Error(`Failed to install dependencies: ${error.message}`);
+      throw new Error(`Failed to install dependencies: ${error instanceof Error ? error.message : String(error)}`);
     }
   } else {
     logger.success('  ✓ All required dependencies are already installed');
   }
 }
 
-function removeSelf(packageManager) {
+function removeSelf(packageManager: PackageManager) {
   try {
     // Check if we're running from the source directory by looking for package.json
     const packageJsonPath = fileUtils.joinPaths(process.cwd(), 'package.json');
@@ -272,7 +292,7 @@ function removeSelf(packageManager) {
   }
 }
 
-function displayNextSteps(framework) {
+function displayNextSteps(framework: Framework) {
   const componentImportPath = './components/ui/inbox/NovuInbox';
 
   logger.blue('\n Next Steps');
@@ -301,7 +321,7 @@ function displayNextSteps(framework) {
 }
 
 // Add new utility functions at the top level
-function validateAppId(appId) {
+function validateAppId(appId: string | undefined): boolean {
   if (appId === undefined || appId === null) return true; // Optional
   if (typeof appId !== 'string' || appId.trim().length === 0) {
     logger.error('Invalid appId provided. It must be a non-empty string.');
@@ -310,7 +330,7 @@ function validateAppId(appId) {
   return true;
 }
 
-function validateSubscriberId(subscriberId) {
+function validateSubscriberId(subscriberId: string | undefined): boolean {
   if (subscriberId === undefined || subscriberId === null) return true; // Optional
   if (typeof subscriberId !== 'string' || subscriberId.trim().length === 0) {
     logger.error('Invalid subscriberId provided. It must be a non-empty string.');
@@ -319,7 +339,7 @@ function validateSubscriberId(subscriberId) {
   return true;
 }
 
-function validateRegion(region) {
+function validateRegion(region: string): boolean {
   if (region !== 'eu' && region !== 'us') {
     logger.error('Invalid region provided. It must be either "eu" or "us".');
     return false;
@@ -352,7 +372,7 @@ function validateProjectStructure() {
   return true;
 }
 
-async function performInstallation(config) {
+async function performInstallation(config: UserConfig) {
   const { framework, packageManager, overwriteComponents, updateEnvExample, appId, subscriberId, region } = config;
   
   try {
@@ -367,14 +387,14 @@ async function performInstallation(config) {
     installDependencies(framework, packageManager);
 
     logger.step(3, 'Creating component structure');
-    await createComponentStructure(framework, overwriteComponents, subscriberId, region);
+    await createComponentStructure(framework as Framework, overwriteComponents, subscriberId || null, region);
 
     if (updateEnvExample) {
       logger.step(4, 'Setting up environment variables');
       if (framework.framework === FRAMEWORKS.NEXTJS) {
-        setupEnvExampleNextJs(updateEnvExample, appId, region);
+        setupEnvExampleNextJs(updateEnvExample, appId || null);
       } else {
-        setupEnvExampleReact(updateEnvExample, appId, region);
+        setupEnvExampleReact(updateEnvExample, appId || null);
       }
     }
 

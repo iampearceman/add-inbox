@@ -6,7 +6,7 @@
  * Gets the React version from the project's dependencies
  * @returns {string} The React version (e.g., '16.14.0', '17.0.2', '18.0.0')
  */
-function getReactVersion() {
+export function getReactVersion(): string {
     try {
       // Try to get React version from package.json
       const packageJson = require('react/package.json');
@@ -21,7 +21,7 @@ function getReactVersion() {
    * Checks if the React version is modern (17 or higher)
    * @returns {boolean} True if React version is 17 or higher
    */
-  function isModernReact() {
+  export function isModernReact(): boolean {
     const version = getReactVersion();
     return version.startsWith('17.') || version.startsWith('18.');
   }
@@ -30,7 +30,7 @@ function getReactVersion() {
    * Checks if the React version is legacy (16.x)
    * @returns {boolean} True if React version is 16.x
    */
-  function isLegacyReact() {
+  export function isLegacyReact(): boolean {
     const version = getReactVersion();
     return version.startsWith('16.');
   }
@@ -39,7 +39,7 @@ function getReactVersion() {
    * Gets the appropriate environment variable name based on React version
    * @returns {string} The environment variable name to use
    */
-  function getEnvironmentVariableName() {
+  export function getEnvironmentVariableName(): string {
     if (isModernReact()) {
       return 'VITE_NOVU_APP_ID';
     }

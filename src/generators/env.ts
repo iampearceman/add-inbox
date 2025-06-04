@@ -1,9 +1,9 @@
-const { FRAMEWORKS, ENV_VARIABLES } = require('../constants');
-const fileUtils = require('../utils/file');
-const logger = require('../utils/logger');
-const { getEnvironmentVariableName } = require('./react-version');
+import { FRAMEWORKS, ENV_VARIABLES } from '../constants';
+import fileUtils from '../utils/file';
+import logger from '../utils/logger';
+import { getEnvironmentVariableName } from './react-version';
 
-function setupEnvExampleNextJs(updateExisting, appId = null) {
+export function setupEnvExampleNextJs(updateExisting: boolean, appId: string | null = null): void {
   logger.gray('• Setting up environment configuration for Next.js...');
   const envExamplePath = fileUtils.joinPaths(process.cwd(), '.env.example');
   const envLocalPath = fileUtils.joinPaths(process.cwd(), '.env.local');
@@ -21,7 +21,7 @@ ${ENV_VARIABLES.NEXTJS.APP_ID}=${appId || ''}
   // Handle .env.example
   if (fileUtils.exists(envExamplePath)) {
     const existingContent = fileUtils.readFile(envExamplePath);
-    if (existingContent.includes(ENV_VARIABLES.NEXTJS.APP_ID)) {
+    if (existingContent?.includes(ENV_VARIABLES.NEXTJS.APP_ID)) {
       logger.blue('  • Novu variables already detected in .env.example. No changes made.');
     } else if (updateExisting) {
       fileUtils.appendFile(envExamplePath, envExampleContent);
@@ -39,7 +39,7 @@ ${ENV_VARIABLES.NEXTJS.APP_ID}=${appId || ''}
   // Handle .env.local
   if (fileUtils.exists(envLocalPath)) {
     const existingContent = fileUtils.readFile(envLocalPath);
-    if (existingContent.includes(ENV_VARIABLES.NEXTJS.APP_ID)) {
+    if (existingContent?.includes(ENV_VARIABLES.NEXTJS.APP_ID)) {
       // Always overwrite with provided appId or empty value
       fileUtils.writeFile(envLocalPath, envLocalContent.trimStart());
       logger.blue('  • Updated Novu configuration in .env.local');
@@ -56,7 +56,7 @@ ${ENV_VARIABLES.NEXTJS.APP_ID}=${appId || ''}
   logger.gray('    Ensure .env.local is in your .gitignore file.');
 }
 
-function setupEnvExampleReact(updateExisting, appId = null) {
+export function setupEnvExampleReact(updateExisting: boolean, appId: string | null = null): void {
   logger.gray('• Setting up environment configuration for React...');
   const envPath = fileUtils.joinPaths(process.cwd(), '.env.example');
   const envLocalPath = fileUtils.joinPaths(process.cwd(), '.env');
@@ -76,7 +76,7 @@ ${envVarName}=${appId || ''}
 
   if (fileUtils.exists(envPath)) {
     const existingContent = fileUtils.readFile(envPath);
-    if (existingContent.includes(envVarName)) {
+    if (existingContent?.includes(envVarName)) {
       logger.blue('  • Novu variables already detected in .env.example. No changes made.');
     } else if (updateExisting) {
       fileUtils.appendFile(envPath, envExampleContent);
@@ -94,7 +94,7 @@ ${envVarName}=${appId || ''}
   // Handle .env
   if (fileUtils.exists(envLocalPath)) {
     const existingContent = fileUtils.readFile(envLocalPath);
-    if (existingContent.includes(envVarName)) {
+    if (existingContent?.includes(envVarName)) {
       // Always overwrite with provided appId or empty value
       fileUtils.writeFile(envLocalPath, envContent.trimStart());
       logger.blue('  • Updated Novu configuration in .env');
@@ -109,9 +109,4 @@ ${envVarName}=${appId || ''}
 
   logger.gray('    Remember to fill in your Novu credentials in .env.');
   logger.gray('    Ensure .env is in your .gitignore file.');
-}
-
-module.exports = {
-  setupEnvExampleNextJs,
-  setupEnvExampleReact
-}; 
+} 

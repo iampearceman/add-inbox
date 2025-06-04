@@ -1,11 +1,33 @@
-function generateNextJsComponent(subscriberId = null, region = 'us') {
+interface FilterByTags {
+  tags: string[];
+}
+
+interface FilterByData {
+  data: Record<string, any>;
+}
+
+interface FilterByTagsAndData {
+  tags: string[];
+  data: Record<string, any>;
+}
+
+interface RegionConfig {
+  socketUrl: string;
+  backendUrl: string;
+}
+
+interface RegionConfigs {
+  eu: RegionConfig;
+}
+
+export function generateNextJsComponent(subscriberId: string | null = null, region: string = 'us'): string {
   // Define common filter patterns
-  const filterByTags = (tags) => ({ tags });
-  const filterByData = (data) => ({ data });
-  const filterByTagsAndData = (tags, data) => ({ tags, data });
+  const filterByTags = (tags: string[]): FilterByTags => ({ tags });
+  const filterByData = (data: Record<string, any>): FilterByData => ({ data });
+  const filterByTagsAndData = (tags: string[], data: Record<string, any>): FilterByTagsAndData => ({ tags, data });
 
   // Define region-specific configuration
-  const regionConfig = {
+  const regionConfig: RegionConfigs = {
     eu: {
       socketUrl: 'https://eu.ws.novu.co',
       backendUrl: 'https://eu.api.novu.co'

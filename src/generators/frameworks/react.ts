@@ -1,6 +1,6 @@
-const { getReactVersion } = require('../react-version');
+import { getReactVersion } from '../react-version';
 
-function generateReactComponent(subscriberId = null) {
+export function generateReactComponent(subscriberId: string | null = null): string {
   const reactVersion = getReactVersion();
   const isModernReact = reactVersion.startsWith('17.') || reactVersion.startsWith('18.');
   
@@ -9,7 +9,7 @@ function generateReactComponent(subscriberId = null) {
     : generateLegacyReactComponent(subscriberId);
 }
 
-function generateSharedInboxCode(subscriberId, region = 'us', envAccessor) {
+function generateSharedInboxCode(subscriberId: string | null, region: string = 'us', envAccessor: string): string {
   return `import { Inbox } from '@novu/react';
 
 // import { dark } from '@novu/react/themes'; => To enable dark theme support, uncomment this line.
@@ -81,18 +81,14 @@ export function NovuInbox() {
 }`;
 }
 
-function generateModernReactComponent(subscriberId, region = 'us') {
+export function generateModernReactComponent(subscriberId: string | null, region: string = 'us'): string {
   return generateSharedInboxCode(subscriberId, region, 'import.meta.env.VITE_NOVU_APP_ID || \'\'');
 }
 
-function generateLegacyReactComponent(subscriberId, region = 'us') {
+export function generateLegacyReactComponent(subscriberId: string | null, region: string = 'us'): string {
   return `// Legacy React component (React 16.x)
 // React import is required for JSX in React 16.x
 import React from 'react';
 
 ${generateSharedInboxCode(subscriberId, region, 'process.env.NOVU_APP_ID || \'\'')}`;
 }
-
-module.exports = {
-  generateReactComponent,
-};

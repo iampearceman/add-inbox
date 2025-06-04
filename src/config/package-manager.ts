@@ -1,8 +1,20 @@
-const { PACKAGE_MANAGERS } = require('../constants');
-const fileUtils = require('../utils/file');
-const logger = require('../utils/logger');
+import { execSync } from 'child_process';
+import prompts from 'prompts';
+import { PACKAGE_MANAGERS, PackageManagerType } from '../constants';
+import fileUtils from '../utils/file';
+import logger from '../utils/logger';
 
-function detectPackageManager() {
+interface PackageManager {
+  name: PackageManagerType;
+  install: string;
+  init: string;
+}
+
+interface PackageJson {
+  packageManager?: string;
+}
+
+export function detectPackageManager(): PackageManager {
   const cwd = process.cwd();
   
   // Check for lock files first
@@ -20,7 +32,7 @@ function detectPackageManager() {
   try {
     const packageJsonPath = fileUtils.joinPaths(cwd, 'package.json');
     if (fileUtils.exists(packageJsonPath)) {
-      const packageJson = fileUtils.readJson(packageJsonPath);
+      const packageJson = fileUtils.readJson(packageJsonPath) as PackageJson;
       if (packageJson.packageManager) {
         const [name, version] = packageJson.packageManager.split('@');
         if (name === PACKAGE_MANAGERS.NPM) {
@@ -41,7 +53,7 @@ function detectPackageManager() {
   return { name: PACKAGE_MANAGERS.NPM, install: 'install', init: 'init -y' };
 }
 
-async function ensurePackageJson(packageManager) {
+export async function ensurePackageJson(packageManager: PackageManager): Promise<boolean> {
   const packagePath = fileUtils.joinPaths(process.cwd(), 'package.json');
   if (!fileUtils.exists(packagePath)) {
     logger.warning('No package.json found.');
@@ -59,7 +71,7 @@ async function ensurePackageJson(packageManager) {
         logger.success('  ✓ package.json initialized.');
       } catch (error) {
         logger.error('  ✗ Failed to initialize package.json:');
-        logger.error(error.message);
+        logger.error(error instanceof Error ? error.message : String(error));
         logger.cyan('  Please initialize it manually and try again.');
         return false;
       }
@@ -70,9 +82,4 @@ async function ensurePackageJson(packageManager) {
   }
   logger.success('  ✓ package.json is ready.');
   return true;
-}
-
-module.exports = {
-  detectPackageManager,
-  ensurePackageJson
-}; 
+} 

@@ -1,11 +1,26 @@
-const chalk = require('chalk');
+import chalk from 'chalk';
 
-const logger = {
-  info: (message) => console.log(chalk.blue(message)),
-  success: (message) => console.log(chalk.green(message)),
-  warning: (message) => console.log(chalk.yellow(message)),
-  error: (message) => console.log(chalk.red(message)),
-  gray: (message) => console.log(chalk.gray(message)),
+interface Logger {
+  info: (message: string, ...args: any[]) => void;
+  success: (message: string, ...args: any[]) => void;
+  warning: (message: string, ...args: any[]) => void;
+  error: (message: string, ...args: any[]) => void;
+  gray: (message: string, ...args: any[]) => void;
+  cyan: (message: string) => string;
+  blue: (message: string) => string;
+  yellow: (message: string) => string;
+  bold: (message: string) => string;
+  step: (number: number, title: string) => void;
+  divider: () => void;
+  banner: () => void;
+}
+
+const logger: Logger = {
+  info: (message, ...args) => console.log(chalk.blue(message), ...args),
+  success: (message, ...args) => console.log(chalk.green(message), ...args),
+  warning: (message, ...args) => console.log(chalk.yellow(message), ...args),
+  error: (message, ...args) => console.log(chalk.red(message), ...args),
+  gray: (message, ...args) => console.log(chalk.gray(message), ...args),
   cyan: (message) => chalk.cyan(message),
   blue: (message) => chalk.blue(message),
   yellow: (message) => chalk.yellow(message),
@@ -32,4 +47,4 @@ const logger = {
   }
 };
 
-module.exports = logger; 
+export default logger; 

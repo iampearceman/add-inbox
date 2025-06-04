@@ -1,17 +1,28 @@
-const fs = require('fs');
-const path = require('path');
-const logger = require('../utils/logger');
-const { FRAMEWORKS } = require('../constants');
+import fs from 'fs';
+import path from 'path';
+import logger from '../utils/logger';
+import { FRAMEWORKS, FrameworkType } from '../constants';
+
+export interface Framework {
+  framework: FrameworkType;
+  version: string;
+  setup: string;
+}
+
+interface PackageJson {
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+}
 
 /**
  * Configuration and Constants
  */
-const MIN_VERSIONS = {
+export const MIN_VERSIONS: Record<FrameworkType, number> = {
   [FRAMEWORKS.REACT]: 16,
   [FRAMEWORKS.NEXTJS]: 12
 };
 
-const FRAMEWORK_SETUPS = {
+export const FRAMEWORK_SETUPS: Record<FrameworkType, string> = {
   [FRAMEWORKS.NEXTJS]: 'App Router',
   [FRAMEWORKS.REACT]: 'Create React App'
 };
@@ -22,9 +33,9 @@ const FRAMEWORK_SETUPS = {
 
 /**
  * Reads and parses package.json
- * @returns {Object|null} The parsed package.json or null if not found/invalid
+ * @returns {PackageJson|null} The parsed package.json or null if not found/invalid
  */
-function getPackageJson() {
+function getPackageJson(): PackageJson | null {
   try {
     const packageJsonPath = path.join(process.cwd(), 'package.json');
     if (!fs.existsSync(packageJsonPath)) {
@@ -32,7 +43,7 @@ function getPackageJson() {
     }
     return JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
   } catch (error) {
-    logger.warning('Failed to read package.json:', error.message);
+    logger.warning('Failed to read package.json:', error instanceof Error ? error.message : String(error));
     return null;
   }
 }
@@ -43,17 +54,17 @@ function getPackageJson() {
 
 /**
  * Extracts the version of a framework from package.json
- * @param {Object} packageJson - The parsed package.json
+ * @param {PackageJson} packageJson - The parsed package.json
  * @param {string} framework - The framework to check
  * @returns {string|null} The framework version or null if not found
  */
-function getFrameworkVersion(packageJson, framework) {
+function getFrameworkVersion(packageJson: PackageJson, framework: string): string | null {
   const dependencies = {
     ...packageJson.dependencies,
     ...packageJson.devDependencies
   };
 
-  const version = dependencies[framework];
+  const version = dependencies?.[framework];
   if (!version) return null;
 
   // Remove any ^ or ~ from version
@@ -63,10 +74,10 @@ function getFrameworkVersion(packageJson, framework) {
 /**
  * Validates if a framework version meets minimum requirements
  * @param {string} version - The version to validate
- * @param {string} framework - The framework being validated
+ * @param {FrameworkType} framework - The framework being validated
  * @returns {boolean} Whether the version is valid
  */
-function validateFrameworkVersion(version, framework) {
+function validateFrameworkVersion(version: string | null, framework: FrameworkType): boolean {
   if (!version) return false;
 
   const [major] = version.split('.');
@@ -79,9 +90,9 @@ function validateFrameworkVersion(version, framework) {
 
 /**
  * Detects the framework and its version from the project
- * @returns {Object|null} Framework information or null if not detected
+ * @returns {Framework|null} Framework information or null if not detected
  */
-function detectFramework() {
+export function detectFramework(): Framework | null {
   const packageJson = getPackageJson();
   if (!packageJson) {
     return null;
@@ -118,15 +129,10 @@ function detectFramework() {
       };
     }
   } catch (error) {
-    logger.warning('Failed to check for next.config.js:', error.message);
+    logger.warning('Failed to check for next.config.js:', error instanceof Error ? error.message : String(error));
   }
 
   return null;
 }
 
-module.exports = {
-  detectFramework,
-  validateFrameworkVersion,
-  MIN_VERSIONS,
-  FRAMEWORK_SETUPS
-}; 
+export { validateFrameworkVersion }; 

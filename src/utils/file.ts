@@ -1,7 +1,21 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
-const fileUtils = {
+interface FileUtils {
+  exists: (filePath: string) => boolean;
+  readJson: (filePath: string) => any;
+  writeJson: (filePath: string, data: any) => void;
+  readFile: (filePath: string) => string | null;
+  writeFile: (filePath: string, content: string) => void;
+  appendFile: (filePath: string, content: string) => void;
+  createDirectory: (dirPath: string) => void;
+  removeDirectory: (dirPath: string) => void;
+  joinPaths: (...paths: string[]) => string;
+  copyFile: (sourcePath: string, targetPath: string) => void;
+  deleteFile: (filePath: string) => void;
+}
+
+const fileUtils: FileUtils = {
   exists: (filePath) => fs.existsSync(filePath),
   
   readJson: (filePath) => {
@@ -52,4 +66,4 @@ const fileUtils = {
   }
 };
 
-module.exports = fileUtils; 
+export default fileUtils; 

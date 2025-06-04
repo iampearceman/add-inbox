@@ -1,11 +1,17 @@
-const { FRAMEWORKS } = require('../constants');
-const fileUtils = require('../utils/file');
-const logger = require('../utils/logger');
-const { generateNextJsComponent } = require('./frameworks/nextjs');
-const { generateModernReactComponent, generateLegacyReactComponent } = require('./frameworks/react');
-const { isModernReact } = require('./react-version');
+import { FRAMEWORKS, FrameworkType } from '../constants';
+import fileUtils from '../utils/file';
+import logger from '../utils/logger';
+import { generateNextJsComponent } from './frameworks/nextjs';
+import { generateModernReactComponent, generateLegacyReactComponent } from './frameworks/react';
+import { isModernReact } from './react-version';
+import { Framework } from '../config/framework';
 
-async function createComponentStructure(framework, overwriteComponents, subscriberId, region = 'us') {
+export async function createComponentStructure(
+  framework: Framework,
+  overwriteComponents: boolean,
+  subscriberId: string | null | undefined,
+  region: string = 'us'
+): Promise<void> {
   logger.gray('• Creating component structure...');
   
   const cwd = process.cwd();
@@ -30,15 +36,15 @@ async function createComponentStructure(framework, overwriteComponents, subscrib
   fileUtils.createDirectory(inboxDir);
   
   // Generate component code based on framework
-  let componentCode;
-  if (framework.framework === 'nextjs') {
-    componentCode = generateNextJsComponent(subscriberId, region);
+  let componentCode: string;
+  if (framework.framework === FRAMEWORKS.NEXTJS) {
+    componentCode = generateNextJsComponent(subscriberId || null, region);
   } else {
     // For React, determine if it's modern or legacy
     if (isModernReact()) {
-      componentCode = generateModernReactComponent(subscriberId, region);
+      componentCode = generateModernReactComponent(subscriberId || null, region);
     } else {
-      componentCode = generateLegacyReactComponent(subscriberId, region);
+      componentCode = generateLegacyReactComponent(subscriberId || null, region);
     }
   }
   
@@ -48,8 +54,4 @@ async function createComponentStructure(framework, overwriteComponents, subscrib
   
   logger.success('  ✓ Created Novu Inbox component');
   logger.gray(`    Location: ${componentPath}`);
-}
-
-module.exports = {
-  createComponentStructure
-}; 
+} 
