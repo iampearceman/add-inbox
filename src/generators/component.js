@@ -25,9 +25,9 @@ async function createComponentStructure(framework, overwriteComponents, subscrib
   const inboxDir = fileUtils.joinPaths(uiDir, 'inbox');
   
   // Create directories if they don't exist
-  fileUtils.createDir(componentsDir);
-  fileUtils.createDir(uiDir);
-  fileUtils.createDir(inboxDir);
+  fileUtils.createDirectory(componentsDir);
+  fileUtils.createDirectory(uiDir);
+  fileUtils.createDirectory(inboxDir);
   
   // Generate component code based on framework
   let componentCode;
