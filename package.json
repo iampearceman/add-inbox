@@ -1,6 +1,6 @@
 {
     "name": "add-inbox",
-    "version": "0.1.24",
+    "version": "0.1.25",
     "description": "CLI tool to add Novu Notifications Inbox to your React or Next.js project",
     "main": "src/cli/index.js",
     "bin": {
@@ -44,5 +44,8 @@
     "homepage": "https://github.com/iampearceman/add-inbox#readme",
     "publishConfig": {
         "access": "public"
+    },
+    "devDependencies": {
+        "@types/commander": "^2.12.0"
     }
 }
