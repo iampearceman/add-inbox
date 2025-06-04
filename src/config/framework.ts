@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import logger from '../utils/logger';
 import { FRAMEWORKS, FrameworkType } from '../constants';
+import fileUtils from '../utils/file';
 
 export interface Framework {
   framework: FrameworkType;

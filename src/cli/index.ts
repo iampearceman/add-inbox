@@ -405,7 +405,7 @@ async function performInstallation(config: UserConfig) {
     return true;
   } catch (error) {
     logger.error('\n❌ Installation failed:');
-    logger.error(error.message);
+    logger.error(error instanceof Error ? error.message : String(error));
     logger.gray('\nPlease try again or contact support if the issue persists.');
     return false;
   }
