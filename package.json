@@ -1,15 +1,13 @@
 {
     "name": "add-inbox",
-    "version": "0.1.20",
+    "version": "0.1.21",
     "description": "CLI tool to add Novu Notifications Inbox to your React or Next.js project",
     "main": "src/cli/index.js",
     "bin": {
         "add-inbox": "src/cli/index.js"
     },
     "scripts": {
-        "start": "node src/cli/index.js",
-        "test": "jest",
-        "test:watch": "jest --watch"
+        "start": "node src/cli/index.js"
     },
     "keywords": [
         "novu",
@@ -25,9 +23,6 @@
         "chalk": "^4.1.2",
         "commander": "^11.1.0",
         "prompts": "^2.4.2"
-    },
-    "devDependencies": {
-        "jest": "^29.7.0"
     },
     "engines": {
         "node": ">=14.0.0"
@@ -49,15 +44,5 @@
     "homepage": "https://github.com/iampearceman/add-inbox#readme",
     "publishConfig": {
         "access": "public"
-    },
-    "jest": {
-        "testEnvironment": "node",
-        "testMatch": ["**/__tests__/**/*.test.js"],
-        "collectCoverage": true,
-        "coverageDirectory": "coverage",
-        "coverageReporters": ["text", "lcov"],
-        "coveragePathIgnorePatterns": [
-            "/node_modules/"
-        ]
     }
 }
