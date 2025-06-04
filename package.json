@@ -2,12 +2,14 @@
     "name": "add-inbox",
     "version": "0.1.25",
     "description": "CLI tool to add Novu Notifications Inbox to your React or Next.js project",
-    "main": "src/cli/index.js",
+    "main": "src/cli/index.ts",
     "bin": {
-        "add-inbox": "src/cli/index.js"
+        "add-inbox": "src/cli/index.ts"
     },
     "scripts": {
-        "start": "node src/cli/index.js"
+        "start": "ts-node src/cli/index.ts",
+        "build": "tsc",
+        "prepublishOnly": "npm run build"
     },
     "keywords": [
         "novu",
@@ -46,6 +48,8 @@
         "access": "public"
     },
     "devDependencies": {
-        "@types/commander": "^2.12.0"
+        "@types/commander": "^2.12.0",
+        "ts-node": "^10.9.1",
+        "typescript": "^5.0.0"
     }
 }
