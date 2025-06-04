@@ -1,4 +1,4 @@
-function generateNextJsComponent(subscriberId = null) {
+function generateNextJsComponent(subscriberId = null, region = 'us') {
   const componentCode = `'use client';
 
 // The Novu inbox component is a React component that allows you to display a notification inbox.
@@ -58,6 +58,9 @@ export default function NovuInbox() {
     applicationIdentifier={process.env.NEXT_PUBLIC_NOVU_APP_ID as string}
     subscriberId={temporarySubscriberId} 
     tabs={tabs}
+    ${region === 'eu' ? `
+    socketUrl="https://eu.ws.novu.co"
+    backendUrl="https://eu.api.novu.co"` : ''}
     appearance={{
       // To enable dark theme support, uncomment the following line:
       // baseTheme: dark,

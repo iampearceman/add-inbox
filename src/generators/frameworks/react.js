@@ -11,7 +11,7 @@ function generateReactComponent(subscriberId = null) {
   return componentCode;
 }
 
-function generateModernReactComponent(subscriberId) {
+function generateModernReactComponent(subscriberId, region = 'us') {
   return `import { Inbox } from '@novu/react';
 
 // import { dark } from '@novu/react/themes'; => To enable dark theme support, uncomment this line.
@@ -62,6 +62,9 @@ export function NovuInbox() {
   return <Inbox 
     applicationIdentifier={import.meta.env.VITE_NOVU_APP_ID || ''}
     subscriberId={temporarySubscriberId}
+    ${region === 'eu' ? `
+    socketUrl="https://eu.ws.novu.co"
+    backendUrl="https://eu.api.novu.co"` : ''}
     tabs={tabs}
     appearance={{
       // To enable dark theme support, uncomment the following line:
@@ -82,7 +85,7 @@ export function NovuInbox() {
 }`;
 }
 
-function generateLegacyReactComponent(subscriberId) {
+function generateLegacyReactComponent(subscriberId, region = 'us') {
   return `// Legacy React component (React 16.x)
 // React import is required for JSX in React 16.x
 import React from 'react';
@@ -137,6 +140,9 @@ export function NovuInbox() {
   return <Inbox 
     applicationIdentifier={process.env.NOVU_APP_ID || ''}
     subscriberId={temporarySubscriberId}
+    ${region === 'eu' ? `
+    socketUrl="https://eu.ws.novu.co"
+    backendUrl="https://eu.api.novu.co"` : ''}
     tabs={tabs}
     appearance={{
       // To enable dark theme support, uncomment the following line:

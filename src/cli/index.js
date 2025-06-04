@@ -13,7 +13,7 @@ const { FRAMEWORKS } = require('../constants');
 
 async function promptUserConfiguration() {
   // Parse command line arguments
-  const { appId, subscriberId } = parseCommandLineArgs();
+  const { appId, subscriberId, region } = parseCommandLineArgs();
   
   // Detect framework first
   const detectedFramework = detectFramework();
@@ -30,7 +30,8 @@ async function promptUserConfiguration() {
   const initialResponses = {
     framework: detectedFramework,
     appId,
-    subscriberId
+    subscriberId,
+    region
   };
 
   // Detect package manager
@@ -318,15 +319,25 @@ function validateSubscriberId(subscriberId) {
   return true;
 }
 
+function validateRegion(region) {
+  if (region !== 'eu' && region !== 'us') {
+    logger.error('Invalid region provided. It must be either "eu" or "us".');
+    return false;
+  }
+  return true;
+}
+
 function parseCommandLineArgs() {
   program
     .option('--appId <id>', 'Novu Application Identifier')
     .option('--subscriberId <id>', 'Novu Subscriber Identifier')
+    .option('--region <region>', 'Novu Region (eu or us)', 'us')
     .parse(process.argv);
 
   return {
     appId: program.opts().appId,
-    subscriberId: program.opts().subscriberId
+    subscriberId: program.opts().subscriberId,
+    region: program.opts().region
   };
 }
 
@@ -342,7 +353,7 @@ function validateProjectStructure() {
 }
 
 async function performInstallation(config) {
-  const { framework, packageManager, overwriteComponents, updateEnvExample, appId, subscriberId } = config;
+  const { framework, packageManager, overwriteComponents, updateEnvExample, appId, subscriberId, region } = config;
   
   try {
     logger.step(1, 'Checking framework and package manager');
@@ -350,19 +361,20 @@ async function performInstallation(config) {
     logger.gray(`    Version: ${framework.version}`);
     logger.gray(`    Setup: ${framework.setup}`);
     logger.success(`  ✓ Detected package manager: ${logger.bold(packageManager.name)}`);
+    logger.success(`  ✓ Region: ${logger.bold(region)}`);
 
     logger.step(2, 'Installing dependencies');
     installDependencies(framework, packageManager);
 
     logger.step(3, 'Creating component structure');
-    await createComponentStructure(framework, overwriteComponents, subscriberId);
+    await createComponentStructure(framework, overwriteComponents, subscriberId, region);
 
     if (updateEnvExample) {
       logger.step(4, 'Setting up environment variables');
       if (framework.framework === FRAMEWORKS.NEXTJS) {
-        setupEnvExampleNextJs(updateEnvExample, appId);
+        setupEnvExampleNextJs(updateEnvExample, appId, region);
       } else {
-        setupEnvExampleReact(updateEnvExample, appId);
+        setupEnvExampleReact(updateEnvExample, appId, region);
       }
     }
 
@@ -383,8 +395,8 @@ async function init() {
   logger.banner();
 
   // Parse and validate command line arguments
-  const { appId, subscriberId } = parseCommandLineArgs();
-  if (!validateAppId(appId) || !validateSubscriberId(subscriberId)) {
+  const { appId, subscriberId, region } = parseCommandLineArgs();
+  if (!validateAppId(appId) || !validateSubscriberId(subscriberId) || !validateRegion(region)) {
     process.exit(1);
   }
 
@@ -420,5 +432,6 @@ module.exports = {
   parseCommandLineArgs,
   validateAppId,
   validateSubscriberId,
-  validateProjectStructure
+  validateProjectStructure,
+  validateRegion
 }; 

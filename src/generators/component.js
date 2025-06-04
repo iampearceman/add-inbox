@@ -2,9 +2,12 @@ const { FRAMEWORKS } = require('../constants');
 const fileUtils = require('../utils/file');
 const logger = require('../utils/logger');
 const { generateNextJsComponent } = require('./frameworks/nextjs');
-const { generateReactComponent } = require('./frameworks/react');
+const { generateModernReactComponent, generateLegacyReactComponent } = require('./frameworks/react');
+const { isModernReact } = require('./react-version');
 
-function createComponentStructure(framework, overwrite, subscriberId = null) {
+async function createComponentStructure(framework, overwriteComponents, subscriberId, region = 'us') {
+  logger.gray('• Creating component structure...');
+  
   const cwd = process.cwd();
   const srcDir = fileUtils.joinPaths(cwd, 'src');
   const appDir = fileUtils.joinPaths(cwd, 'app');
@@ -13,41 +16,38 @@ function createComponentStructure(framework, overwrite, subscriberId = null) {
   let baseDir = cwd;
   if (fileUtils.exists(srcDir)) {
     baseDir = srcDir;
-    logger.gray('  • Using src directory for component placement');
   } else if (fileUtils.exists(appDir)) {
     baseDir = appDir;
-    logger.gray('  • Using app directory for component placement');
-  } else {
-    logger.gray('  • No src or app directory found, using project root');
   }
-
-  const componentsBaseDir = 'components';
-  const inboxRelativeDir = 'ui/inbox';
-  const inboxDir = fileUtils.joinPaths(baseDir, componentsBaseDir, inboxRelativeDir);
-
-  if (fileUtils.exists(inboxDir) && !overwrite) {
-    logger.warning(`  • Inbox component directory ${logger.cyan(inboxRelativeDir)} already exists. Skipping creation.`);
-    return;
-  }
-
-  if (fileUtils.exists(inboxDir) && overwrite) {
-    logger.warning(`  • Overwriting existing Inbox component directory: ${logger.cyan(inboxRelativeDir)}`);
-    fileUtils.removeDirectory(inboxDir);
-  }
-
-  fileUtils.createDirectory(inboxDir);
-  logger.gray(`  • Created component directory structure at ${logger.cyan(inboxRelativeDir)}`);
-
-  logger.gray('\n• Creating component files...');
-  const inboxComponentFilePath = fileUtils.joinPaths(inboxDir, 'NovuInbox.tsx');
   
-  // Generate component content based on framework
-  const inboxComponentContent = framework.framework === FRAMEWORKS.NEXTJS 
-    ? generateNextJsComponent(subscriberId)
-    : generateReactComponent(subscriberId);
-
-  fileUtils.writeFile(inboxComponentFilePath, inboxComponentContent);
-  logger.success(`  ✓ Created ${logger.cyan(inboxRelativeDir + '/NovuInbox.tsx')}`);
+  const componentsDir = fileUtils.joinPaths(baseDir, 'components');
+  const uiDir = fileUtils.joinPaths(componentsDir, 'ui');
+  const inboxDir = fileUtils.joinPaths(uiDir, 'inbox');
+  
+  // Create directories if they don't exist
+  fileUtils.createDir(componentsDir);
+  fileUtils.createDir(uiDir);
+  fileUtils.createDir(inboxDir);
+  
+  // Generate component code based on framework
+  let componentCode;
+  if (framework.framework === 'nextjs') {
+    componentCode = generateNextJsComponent(subscriberId, region);
+  } else {
+    // For React, determine if it's modern or legacy
+    if (isModernReact()) {
+      componentCode = generateModernReactComponent(subscriberId, region);
+    } else {
+      componentCode = generateLegacyReactComponent(subscriberId, region);
+    }
+  }
+  
+  // Write component file
+  const componentPath = fileUtils.joinPaths(inboxDir, 'NovuInbox.tsx');
+  fileUtils.writeFile(componentPath, componentCode);
+  
+  logger.success('  ✓ Created Novu Inbox component');
+  logger.gray(`    Location: ${componentPath}`);
 }
 
 module.exports = {
